@@ -22,10 +22,11 @@ class Consultation extends Controller
         $code_presc=$req->input("code_presc");//code_presc
         $numero= $req->input("id_patient"); //Id_patient
         $date_examen= $req->input("date_examen"); //Date_examen
+        $num_arriv= $req->input("num_arriv"); //Numéro Régistre
         $login= $req->input("login"); //login
 
-        $donne=[$num_consult,$numero,$code_presc,$code_examen,$date_examen,$login];
-        $sql="INSERT INTO crdtpat.CONSULTATION (ID_CONSULTATION,ID_PATIENT,CODE_PRESC,ID_EXAMEN,DATE_EXAMEN,LAST_UPDATE,USER_UPDATE) values (?,trim(initcap(?)),trim(initcap(?)),trim(initcap(?)),TO_DATE(?,'dd-mm-yyyy'),sysdate,? )";
+        $donne=[$num_consult,$numero,$code_presc,$code_examen,$num_arriv,$date_examen,$login];
+        $sql="INSERT INTO crdtpat.CONSULTATION (ID_CONSULTATION,ID_PATIENT,CODE_PRESC,ID_EXAMEN,DATE_EXAMEN,NUM_ARRIV,LAST_UPDATE,USER_UPDATE) values (?,trim(initcap(?)),trim(initcap(?)),trim(initcap(?)),TO_DATE(?,'dd-mm-yyyy'),trim(initcap(?)),sysdate,? )";
         $requette=DB::insert($sql,$donne);
         
         if (!is_null($requette)) {

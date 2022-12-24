@@ -18,7 +18,7 @@ class ClientFact extends Controller
         $nif = $req->input("nif");
         $resultat = "";
         $verf = array();
-        $sql = "select TAMBY.VIEW_CLIENT('".$code_cli."') as verfi from dual ";
+        $sql = "select MIANDRALITINA.VIEW_CLIENT('".$code_cli."') as verfi from dual ";
         $req2 = DB::select($sql);
         foreach($req2 as $row){
             $verf=$row;
@@ -29,7 +29,7 @@ class ClientFact extends Controller
 
         if($verf== "--a-"){
             $donne = [$code_cli, $nom, $desc, $rc, $stat, $cif, $nif];
-            $sql = "INSERT INTO TAMBY.CLIENT (code_client,nom,description,rc,stat,cif,nif) values (trim(?),trim(?),trim(?),trim(?),trim(?),trim(?),trim(?) )";
+            $sql = "INSERT INTO MIANDRALITINA.CLIENT (code_client,nom,description,rc,stat,cif,nif) values (trim(?),trim(?),trim(?),trim(?),trim(?),trim(?),trim(?) )";
             $requette = DB::insert($sql, $donne);            
             try {
                 $resultat = [
@@ -56,7 +56,7 @@ class ClientFact extends Controller
 
     public function getClientFact()
     {
-        $sql = "SELECT code_client,nom,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description,rc,stat,cif,nif from TAMBY.client where ROWNUM <= 10 order by code_client  asc   ";
+        $sql = "SELECT code_client,nom,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description,rc,stat,cif,nif from MIANDRALITINA.client where ROWNUM <= 10 order by code_client  asc   ";
         $req2 = DB::select($sql);
         return response()->json($req2);
     }
@@ -69,7 +69,7 @@ class ClientFact extends Controller
 
         $code = strtoupper($code_cli);
         $nomM = strtoupper($nom);
-        $sql = "SELECT code_client,nom,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description,rc,stat,cif,nif from TAMBY.client where upper(code_client) like '%" . $code . "%' and  upper(nom) like '%" . $nomM . "%'  ";
+        $sql = "SELECT code_client,nom,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description,rc,stat,cif,nif from MIANDRALITINA.client where upper(code_client) like '%" . $code . "%' and  upper(nom) like '%" . $nomM . "%'  ";
         $requette = DB::select($sql);
 
         return response()->json($requette);
@@ -88,7 +88,7 @@ class ClientFact extends Controller
         $nif = $req->input("nif");
 
         $donne = [$nom, $desc, $rc, $stat, $cif, $nif, $code_cli];
-        $sql = "UPDATE TAMBY.CLIENT SET  NOM=trim(?),description=trim(?),RC=trim(?),STAT=trim(?),CIF=trim(?),NIF=trim(?) WHERE CODE_CLIENT=? ";
+        $sql = "UPDATE MIANDRALITINA.CLIENT SET  NOM=trim(?),description=trim(?),RC=trim(?),STAT=trim(?),CIF=trim(?),NIF=trim(?) WHERE CODE_CLIENT=? ";
 
         $requette = DB::update($sql, $donne);
         if (!is_null($requette)) {
@@ -102,7 +102,7 @@ class ClientFact extends Controller
     }
     public function deleteClientFact($code_cli)
     {
-        $sql = "DELETE FROM TAMBY.CLIENT WHERE (CODE_CLIENT=? )";
+        $sql = "DELETE FROM MIANDRALITINA.CLIENT WHERE (CODE_CLIENT=? )";
 
         $resultat = [];
         $requette = DB::delete($sql, [$code_cli]);
