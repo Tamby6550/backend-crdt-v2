@@ -18,7 +18,7 @@ class ClientFact extends Controller
         $nif = $req->input("nif");
         $resultat = "";
         $verf = array();
-        $sql = "select MIANDRALITINA.VIEW_CLIENT('".$code_cli."') as verfi from dual ";
+        $sql = "select MIANDRALITINA.VIEW_CLIENT_VER('".$code_cli."') as verfi from dual ";
         $req2 = DB::select($sql);
         foreach($req2 as $row){
             $verf=$row;

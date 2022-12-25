@@ -22,13 +22,13 @@ class Prescripteur extends Controller
        $requette=DB::insert($sql, $donne);
        if (!is_null($requette)) {
         $resultat=[
-            "success"=>true,
+            "etat"=>'success',
             "message"=>"Enregistrement éfféctuée",
             'res'=>$requette 
         ];
        }else{
         $resultat=[
-            "success"=>false, 
+            "etat"=>'warn', 
             "message"=>"Erreur sur l'enregistrement" 
         ];
        }
@@ -37,7 +37,7 @@ class Prescripteur extends Controller
 
     public function getPrescripteur()
     {
-        $sql="SELECT CODE_PRESC,initcap(upper(TITRE||' '||NOM)) as NOM,PHONE1,PHONE2,MOBILE,ADRESSE FROM crdtpat.PRESCRIPTEUR ORDER BY LAST_UPDATE DESC";
+        $sql="SELECT CODE_PRESC,initcap(upper(TITRE||' '||NOM)) as NOM,PHONE1,PHONE2,MOBILE,ADRESSE FROM crdtpat.PRESCRIPTEUR where ROWNUM <= 10 ORDER BY LAST_UPDATE ASC";
         $requette=DB::select($sql);
         return response()->json($requette);
     }
@@ -83,15 +83,15 @@ class Prescripteur extends Controller
        $phone2=$req->input("phone2");
        $mobile=$req->input("mobile");
        $adresse=$req->input("adresse");
-       $login=$req->input("login");
+    //    $login=$req->input("login");
 
-       $donne=[$code_presc,$titre,$name,$phone1,$phone2,$mobile,$adresse,$login,$code_presc];
-       $sql="UPDATE crdtpat.PRESCRIPTEUR SET CODE_PRESC=?,TITRE=?,NOM=trim(?),PHONE1=trim(?),PHONE2=trim(?),MOBILE=trim(?),ADRESSE=trim(?),LAST_UPDATE=sysdate,USER_UPDATE=? WHERE CODE_PRESC=? ";
+       $donne=[$code_presc,$titre,$name,$phone1,$phone2,$mobile,$adresse,$code_presc];
+       $sql="UPDATE crdtpat.PRESCRIPTEUR SET CODE_PRESC=?,TITRE=?,NOM=trim(?),PHONE1=trim(?),PHONE2=trim(?),MOBILE=trim(?),ADRESSE=trim(?),LAST_UPDATE=sysdate WHERE CODE_PRESC=? ";
 
        $requette=DB::update($sql, $donne);
        if (!is_null($requette)) {
         $resultat=[
-            "success"=>true,
+            "etat"=>'success',
             "message"=>"Modification éfféctuée",
             'res'=>$requette 
         ];
