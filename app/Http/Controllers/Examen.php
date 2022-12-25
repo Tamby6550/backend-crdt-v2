@@ -10,8 +10,8 @@ class Examen extends Controller
     {
         $resultat=array();
         $data1=array();
-        $sqlIdExam="SELECT nvl(max(ID_EXAMEN),0)+1 as nbenreg FROM crdtpat.EXAMEN ";
-        $sqlExam="SELECT ID_EXAMEN,nvl(LIBELLE,' ') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  FROM crdtpat.EXAMEN order by ID_EXAMEN DESC";
+        $sqlIdExam="SELECT nvl(max(ID_EXAMEN),0)+1 as nbenreg FROM miandralitina.EXAMEN ";
+        $sqlExam="SELECT ID_EXAMEN,nvl(LIBELLE,' ') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  FROM miandralitina.EXAMEN order by ID_EXAMEN DESC";
         $req1=DB::select($sqlIdExam);
         $req2=DB::select($sqlExam); 
         foreach($req1 as $row){
@@ -39,7 +39,7 @@ class Examen extends Controller
         $tar = $req->input("tarif");
         $login = $req->input("login");
         $donne=[$id_exam,$code_tarif,$desc,$type,$montant,$tar,$login];
-        $sqlInsert="INSERT INTO crdtpat.EXAMEN (ID_EXAMEN,CODE_TARIF,LIBELLE,TYPES,MONTANT,TARIF,LAST_UPDATE, USER_UPDATE) values (?,trim(upper(?)),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate,?)";
+        $sqlInsert="INSERT INTO miandralitina.EXAMEN (ID_EXAMEN,CODE_TARIF,LIBELLE,TYPES,MONTANT,TARIF,LAST_UPDATE, USER_UPDATE) values (?,trim(upper(?)),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate,?)";
         $requette=DB::insert($sqlInsert,$donne);
 
         if (!is_null($requette)) {
@@ -63,7 +63,7 @@ class Examen extends Controller
         $code_tarif = $req->input("code_tarif");
         $type = $req->input("type");
         $tarif = $req->input("tarif");
-        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from crdtpat.EXAMEN WHERE 1=1";
+        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from miandralitina.EXAMEN WHERE 1=1";
 
         if ($desc != "") {
             $sql = $sql ." AND upper(LIBELLE) like upper('%".$desc."%') ";
@@ -94,7 +94,7 @@ class Examen extends Controller
         $login = $req->input("login");
 
         $donne=[$code_tarif,$desc,$montant,$type,$tar,$login,$id_exam];
-        $sql="UPDATE crdtpat.EXAMEN SET CODE_TARIF=trim(upper(?)),LIBELLE=trim(upper(?)),MONTANT=upper(trim(?)),TYPES=trim(upper(?)),TARIF=trim(upper(?)),LAST_UPDATE=sysdate,USER_UPDATE=? WHERE ID_EXAMEN=?";
+        $sql="UPDATE miandralitina.EXAMEN SET CODE_TARIF=trim(upper(?)),LIBELLE=trim(upper(?)),MONTANT=upper(trim(?)),TYPES=trim(upper(?)),TARIF=trim(upper(?)),LAST_UPDATE=sysdate,USER_UPDATE=? WHERE ID_EXAMEN=?";
         
         $requette=DB::update($sql, $donne);
         if (!is_null($requette)) {
@@ -108,7 +108,7 @@ class Examen extends Controller
     }
     public function deleteExamen($id_exam)
     {
-        $sql="DELETE FROM crdtpat.EXAMEN WHERE ID_EXAMEN=?";
+        $sql="DELETE FROM miandralitina.EXAMEN WHERE ID_EXAMEN=?";
 
         $resultat=[];
         $requette=DB::delete($sql, [$id_exam]);
@@ -125,7 +125,7 @@ class Examen extends Controller
     {
         $sql="";
         //substr exemple : substr(L1,1,1)= L
-        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from crdtpat.EXAMEN WHERE TARIF=substr(?,1,1) order by LAST_UPDATE DESC ";
+        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from miandralitina.EXAMEN WHERE TARIF=substr(?,1,1) order by LAST_UPDATE DESC ";
         $requette=DB::select($sql,[$tarif]);
 
         return response()->json($requette);
