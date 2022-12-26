@@ -12,7 +12,7 @@ class Patient extends Controller
         $data1=array();
         $sqlIdExam="SELECT nvl(max(ID_PATIENT),0)+1 as nbenreg FROM crdtpat.PATIENT";
         //trunc(LAST_UPDATE)>=trunc(sysdate-15) = Ze enregistrer le dernier 15 jours ou égale
-        $sqlExam="SELECT ID_PATIENT,initcap(NOM||' '||nvl(PRENOM,' ')) as NOM,to_char(DATENAISS,'DD/MM/YYYY') as DATENAISS ,TYPE_PATIENT,SEXE,nvl(ADRESSE,' ') as ADRESSE,nvl(TELEPHONE,' ') as TELEPHONE FROM crdtpat.PATIENT WHERE trunc(LAST_UPDATE)>=trunc(sysdate-15) order by LAST_UPDATE DESC  ";
+        $sqlExam="SELECT ID_PATIENT,initcap(NOM) as NOM,initcap(nvl(PRENOM,' ')) as PRENOM,to_char(DATENAISS,'DD/MM/YYYY') as DATENAISS ,TYPE_PATIENT as type,SEXE,nvl(ADRESSE,' ') as ADRESSE,nvl(TELEPHONE,' ') as TELEPHONE FROM crdtpat.PATIENT WHERE trunc(LAST_UPDATE)>=trunc(sysdate-15) order by LAST_UPDATE DESC  ";
         $req1=DB::select($sqlIdExam);
         $req2=DB::select($sqlExam); 
         foreach($req1 as $row){
@@ -58,7 +58,7 @@ class Patient extends Controller
 
         if (!is_null($requette)) {
             $resultat=[
-                "success"=>true,
+                "etat"=>'success',
                 "message"=>"Enregistrement éfféctuée",
                 'res'=>$requette 
             ];
@@ -79,7 +79,7 @@ class Patient extends Controller
         $sexe=$req->input("sexe");
         $date_naiss=$req->input("date_naiss"); 
         $telephone=$req->input("telephone");
-        $sql="SELECT ID_PATIENT,initcap(NOM||' '||nvl(PRENOM,' ')) as NOM,to_char(DATENAISS,'DD/MM/YYYY') as DATENAISS ,TYPE_PATIENT,SEXE,nvl(ADRESSE,' ') as ADRESSE,nvl(TELEPHONE,' ') as TELEPHONE FROM crdtpat.PATIENT WHERE 1=1";
+        $sql="SELECT ID_PATIENT,initcap(NOM) as NOM,initcap(nvl(PRENOM,' ')) as PRENOM,to_char(DATENAISS,'DD/MM/YYYY') as DATENAISS ,TYPE_PATIENT as type,SEXE,nvl(ADRESSE,' ') as ADRESSE,nvl(TELEPHONE,' ') as TELEPHONE FROM crdtpat.PATIENT WHERE 1=1";
 
         if ($noms!="")          {$sql=$sql." AND upper(nom) like upper('%".$noms."%') ";}
         if ($prenom!="")        {$sql=$sql." AND upper(prenom) like upper('%".$prenom."%') ";}
@@ -103,15 +103,14 @@ class Patient extends Controller
         $date_naiss = $req->input("date_naiss");
         $telephone = $req->input("telephone");
         $adresse = $req->input("adresse");
-        $login = $req->input("login");
 
-        $donne=[$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone,$login,$id_patient];
-        $sql="UPDATE crdtpat.PATIENT SET NOM=?,PRENOM=?,DATENAISS=TO_DATE(?,'dd-mm-yyyy'),TYPE_PATIENT=trim(?),SEXE=trim(?),ADRESSE=trim(?),TELEPHONE=trim(?),LAST_UPDATE=sysdate,USER_UPDATE=? WHERE ID_PATIENT=?";
+        $donne=[$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone,$id_patient];
+        $sql="UPDATE crdtpat.PATIENT SET NOM=?,PRENOM=?,DATENAISS=TO_DATE(?,'dd-mm-yyyy'),TYPE_PATIENT=trim(?),SEXE=trim(?),ADRESSE=trim(?),TELEPHONE=trim(?),LAST_UPDATE=sysdate WHERE ID_PATIENT=?";
         
         $requette=DB::update($sql, $donne);
         if (!is_null($requette)) {
          $resultat=[
-             "success"=>true,
+            "etat"=>'success',
              "message"=>"Modification éfféctuée",
              'res'=>$requette 
          ];
@@ -127,7 +126,7 @@ class Patient extends Controller
         $requette=DB::delete($sql, [$id_patient]);
         if (!is_null($requette)) {
             $resultat=[
-                "success"=>true,
+                "etat"=>'success',
                 "message"=>"Suppression éfféctuée",
                 'res'=>$requette 
             ];

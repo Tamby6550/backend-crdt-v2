@@ -11,7 +11,7 @@ class Examen extends Controller
         $resultat=array();
         $data1=array();
         $sqlIdExam="SELECT nvl(max(ID_EXAMEN),0)+1 as nbenreg FROM miandralitina.EXAMEN ";
-        $sqlExam="SELECT ID_EXAMEN,nvl(LIBELLE,' ') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  FROM miandralitina.EXAMEN order by ID_EXAMEN DESC";
+        $sqlExam="SELECT ID_EXAMEN,nvl(LIBELLE,' ') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  FROM miandralitina.EXAMEN where ROWNUM <= 10 order by ID_EXAMEN ASC";
         $req1=DB::select($sqlIdExam);
         $req2=DB::select($sqlExam); 
         foreach($req1 as $row){
@@ -34,17 +34,16 @@ class Examen extends Controller
         $id_exam = $req->input("id_exam");
         $code_tarif = $req->input("code_tarif");
         $montant = $req->input("montant");
-        $desc = $req->input("desc");
+        $desc = $req->input("lib");
         $type = $req->input("type");
         $tar = $req->input("tarif");
-        $login = $req->input("login");
-        $donne=[$id_exam,$code_tarif,$desc,$type,$montant,$tar,$login];
-        $sqlInsert="INSERT INTO miandralitina.EXAMEN (ID_EXAMEN,CODE_TARIF,LIBELLE,TYPES,MONTANT,TARIF,LAST_UPDATE, USER_UPDATE) values (?,trim(upper(?)),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate,?)";
+        $donne=[$id_exam,$code_tarif,$desc,$type,$montant,$tar];
+        $sqlInsert="INSERT INTO miandralitina.EXAMEN (ID_EXAMEN,CODE_TARIF, LIBELLE,TYPES,MONTANT,TARIF) values (?,trim(upper(?)),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)))";
         $requette=DB::insert($sqlInsert,$donne);
 
         if (!is_null($requette)) {
             $resultat=[
-                "success"=>true,
+                "etat"=>'success',
                 "message"=>"Enregistrement éfféctuée",
                 'res'=>$requette 
             ];
@@ -59,7 +58,7 @@ class Examen extends Controller
     public function rechercheExamen(Request $req)
     {
         $sql="";
-        $desc = $req->input("desc");
+        $desc = $req->input("lib");
         $code_tarif = $req->input("code_tarif");
         $type = $req->input("type");
         $tarif = $req->input("tarif");
@@ -77,7 +76,7 @@ class Examen extends Controller
         if ($tarif!="") {
             $sql = $sql . " AND tarif='".$tarif."' ";
         }
-        $sql = $sql ." ORDER BY LAST_UPDATE DESC";
+        $sql = $sql ." order by ID_EXAMEN ASC";
         $requette=DB::select($sql);
 
         return response()->json($requette);
@@ -85,21 +84,20 @@ class Examen extends Controller
     public function updateExamen(Request $req)
     {
         $resultat=array();
-        $id_exam = $req->input("id_exam");
+        $id_exam = $req->input("id_examen");
         $code_tarif = $req->input("code_tarif");
         $montant = $req->input("montant");
-        $desc = $req->input("desc");
+        $desc = $req->input("lib");
         $type = $req->input("type");
         $tar = $req->input("tarif");
-        $login = $req->input("login");
 
-        $donne=[$code_tarif,$desc,$montant,$type,$tar,$login,$id_exam];
-        $sql="UPDATE miandralitina.EXAMEN SET CODE_TARIF=trim(upper(?)),LIBELLE=trim(upper(?)),MONTANT=upper(trim(?)),TYPES=trim(upper(?)),TARIF=trim(upper(?)),LAST_UPDATE=sysdate,USER_UPDATE=? WHERE ID_EXAMEN=?";
+        $donne=[$code_tarif,$desc,$montant,$type,$tar,$id_exam];
+        $sql="UPDATE miandralitina.EXAMEN SET CODE_TARIF=trim(upper(?)),LIBELLE=trim(upper(?)),MONTANT=upper(trim(?)),TYPES=trim(upper(?)),TARIF=trim(upper(?)) WHERE ID_EXAMEN=?";
         
         $requette=DB::update($sql, $donne);
         if (!is_null($requette)) {
          $resultat=[
-             "success"=>true,
+             "etat"=>'success',
              "message"=>"Modification éfféctuée",
              'res'=>$requette 
          ];
@@ -114,7 +112,7 @@ class Examen extends Controller
         $requette=DB::delete($sql, [$id_exam]);
         if (!is_null($requette)) {
             $resultat=[
-                "success"=>true,
+                "etat"=>'success',
                 "message"=>"Suppression éfféctuée",
                 'res'=>$requette 
             ];
