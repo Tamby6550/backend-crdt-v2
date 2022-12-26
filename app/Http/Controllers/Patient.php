@@ -51,15 +51,14 @@ class Patient extends Controller
         $date_naiss = $req->input("date_naiss");
         $telephone = $req->input("telephone");
         $adresse = $req->input("adresse");
-        $login = $req->input("login");
-        $donne=[$id_patient,$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone,$login];
-        $sqlInsert="INSERT INTO crdtpat.PATIENT (ID_PATIENT,NOM,PRENOM,DATENAISS,TYPE_PATIENT,SEXE,ADRESSE,TELEPHONE,LAST_UPDATE, USER_UPDATE) values (?,trim(initcap(?)),trim(initcap(?)),TO_DATE(?,'dd-mm-yyyy'),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate,? )";
+        $donne=[$id_patient,$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone];
+        $sqlInsert="INSERT INTO crdtpat.PATIENT (ID_PATIENT,NOM,PRENOM,DATENAISS,TYPE_PATIENT,SEXE,ADRESSE,TELEPHONE,LAST_UPDATE) values (?,trim(initcap(?)),trim(initcap(?)),TO_DATE(?,'dd-mm-yyyy'),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate )";
         $requette=DB::insert($sqlInsert,$donne);
 
         if (!is_null($requette)) {
             $resultat=[
                 "etat"=>'success',
-                "message"=>"Enregistrement éfféctuée",
+                "message"=>"Enregistrement éfféctuée ",
                 'res'=>$requette 
             ];
            }else{

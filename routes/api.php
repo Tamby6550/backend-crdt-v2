@@ -147,3 +147,11 @@ Route::post("afficheDetailsSaisieReglement","App\Http\Controllers\SaisieReglemen
 Route::post("insertReglementDetails","App\Http\Controllers\SaisieReglement@insertReglementDetails");
 //Affiche list paiment details saisie reglement
 Route::post("affichePaimentDetailsReglmnt","App\Http\Controllers\SaisieReglement@affichePaimentDetailsReglmnt");
+
+
+//----------------------------- Information Registre du jour ------------------------------//
+//Maka numéro registre
+Route::get("getNumArriv","App\Http\Controllers\Registre@getNumArriv");
+
+//Insertion dans registre
+Route::post("insertRegistre","App\Http\Controllers\Registre@insertRegistre");
