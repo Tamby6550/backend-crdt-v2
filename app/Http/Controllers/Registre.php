@@ -54,4 +54,51 @@ class Registre extends Controller
            }
            return response()->json($resultat);
     }
+    public function getListRegistre()
+    {    
+        $dates=date_create();  
+        $sqlRegistre="SELECT to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
+        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
+        WHERE to_char(DATE_ARR,'DD/MM/YYYY')=to_char(sysdate,'DD/MM/YYYY') order by date_arr DESC";
+        $req=DB::select($sqlRegistre); 
+
+        return response()->json($req);
+    }
+
+    public function updateRegistre(Request $req)
+    {
+        $resultat=array();
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $id_patient = $req->input("id_patient");
+        $verf_exam ="0";
+        $sql="UPDATE crdtpat.REGISTRE SET ID_PATIENT='".$id_patient."' WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') AND VERF_EXAM='".$verf_exam."' ";
+        
+        $requette=DB::update($sql);
+        if (!is_null($requette)) {
+         $resultat=[
+            "etat"=>'success',
+             "message"=>"N° journal modifié",
+             'res'=>$sql 
+         ];
+        }
+        return response()->json($resultat);
+    }
+    public function rechercheRegistre(Request $req)
+    {
+        $sql="";
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $id_patient = $req->input("id_patient");
+        $sql="SELECT to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
+        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
+        WHERE 1=1";
+        if ($num_arriv!="")  { $sql=$sql." AND NUMERO='".$num_arriv."'";}
+        if ($date_arriv!="") {$sql=$sql." AND DATE_ARR=TO_DATE('".$date_arriv."','dd-mm-yyyy')";}
+        if ($id_patient!="") {$sql=$sql." AND ID_PATIENT='".$id_patient."' ";}
+        $sql = $sql ." ORDER BY NUMERO ASC";
+        $requette=DB::select($sql);
+
+        return response()->json($requette);
+    }
 }

@@ -155,3 +155,12 @@ Route::get("getNumArriv","App\Http\Controllers\Registre@getNumArriv");
 
 //Insertion dans registre
 Route::post("insertRegistre","App\Http\Controllers\Registre@insertRegistre");
+
+//Get Listeregistre
+Route::get("getListRegistre","App\Http\Controllers\Registre@getListRegistre");
+
+// Modification N°Journal
+Route::put("updateRegistre","App\Http\Controllers\Registre@updateRegistre");
+
+//Recherche
+Route::post("rechercheRegistre","App\Http\Controllers\Registre@rechercheRegistre");
