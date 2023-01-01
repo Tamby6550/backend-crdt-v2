@@ -164,3 +164,14 @@ Route::put("updateRegistre","App\Http\Controllers\Registre@updateRegistre");
 
 //Recherche
 Route::post("rechercheRegistre","App\Http\Controllers\Registre@rechercheRegistre");
+
+// Suppression
+Route::delete("deleteRegistre/{num_arriv}&{date_arriv}","App\Http\Controllers\Registre@deleteRegistre");
+
+
+//----------------------------- Examen Du Jour ------------------------------//
+//Maka numéro registre
+Route::get("getExamenNonEff","App\Http\Controllers\ExamenDuJour@getExamenNonEff");
+
+//Insertion dans Examens_details
+Route::post("insertExamenJour","App\Http\Controllers\ExamenDuJour@insertExamenJour");

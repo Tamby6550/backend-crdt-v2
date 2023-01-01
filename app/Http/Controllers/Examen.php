@@ -65,13 +65,13 @@ class Examen extends Controller
         $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from miandralitina.EXAMEN WHERE 1=1";
 
         if ($desc != "") {
-            $sql = $sql ." AND upper(LIBELLE) like upper('%".$desc."%') ";
+            $sql = $sql ." AND trim(upper(LIBELLE)) like trim(upper('%".$desc."%')) ";
         }
         if ($code_tarif != "") {
-            $sql = $sql . " AND upper(code_tarif) like upper('%" . $code_tarif . "%') ";
+            $sql = $sql . " AND trim(upper(code_tarif)) like trim(upper('%" . $code_tarif . "%')) ";
         }
         if ($type!= "") {
-            $sql = $sql . " AND types='" . $type . "' ";
+            $sql = $sql . " AND trim(types)=trim('" . $type . "')";
         }
         if ($tarif!="") {
             $sql = $sql . " AND tarif='".$tarif."' ";
@@ -123,8 +123,8 @@ class Examen extends Controller
     {
         $sql="";
         //substr exemple : substr(L1,1,1)= L
-        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,'') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF  from miandralitina.EXAMEN WHERE TARIF=substr(?,1,1) order by LAST_UPDATE DESC ";
-        $requette=DB::select($sql,[$tarif]);
+        $sql="SELECT ID_EXAMEN,nvl(LIBELLE,' ') as LIB,CODE_TARIF,TYPES,MONTANT,TARIF    from miandralitina.EXAMEN WHERE TARIF='".$tarif."' order by ID_EXAMEN asc ";
+        $requette=DB::select($sql);
 
         return response()->json($requette);
     }
