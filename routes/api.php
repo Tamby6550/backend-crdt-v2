@@ -170,8 +170,17 @@ Route::delete("deleteRegistre/{num_arriv}&{date_arriv}","App\Http\Controllers\Re
 
 
 //----------------------------- Examen Du Jour ------------------------------//
-//Maka numéro registre
+//Examen non effectuer
 Route::get("getExamenNonEff","App\Http\Controllers\ExamenDuJour@getExamenNonEff");
 
 //Insertion dans Examens_details
 Route::post("insertExamenJour","App\Http\Controllers\ExamenDuJour@insertExamenJour");
+
+//Get examen effectuée
+Route::get("getExamenEff","App\Http\Controllers\ExamenDuJour@getExamenEff");
+
+//Get examen effectuée d'un patient
+Route::get("getPatientExamenEff/{num_arriv}&{date_arriv}","App\Http\Controllers\ExamenDuJour@getPatientExamenEff");
+
+// Suppression
+Route::delete("deleteExamenDetails/{num_arriv}&{date_arriv}&{lib_examen}","App\Http\Controllers\ExamenDuJour@deleteExamenDetails");

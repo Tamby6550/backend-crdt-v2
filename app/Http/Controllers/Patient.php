@@ -51,6 +51,12 @@ class Patient extends Controller
         $date_naiss = $req->input("date_naiss");
         $telephone = $req->input("telephone");
         $adresse = $req->input("adresse");
+        if (trim($adresse)=='') {
+            $adresse='-';
+          }
+          if (trim($telephone)=='') {
+            $telephone='-';
+          }
         $donne=[$id_patient,$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone];
         $sqlInsert="INSERT INTO crdtpat.PATIENT (ID_PATIENT,NOM,PRENOM,DATENAISS,TYPE_PATIENT,SEXE,ADRESSE,TELEPHONE,LAST_UPDATE) values (?,trim(initcap(?)),trim(initcap(?)),TO_DATE(?,'dd-mm-yyyy'),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)),sysdate )";
         $requette=DB::insert($sqlInsert,$donne);
@@ -102,7 +108,12 @@ class Patient extends Controller
         $date_naiss = $req->input("date_naiss");
         $telephone = $req->input("telephone");
         $adresse = $req->input("adresse");
-
+        if (trim($adresse)=='') {
+            $adresse='-';
+          }
+          if (trim($telephone)=='') {
+            $telephone='-';
+          }
         $donne=[$noms,$prenom,$date_naiss,$type,$sexe,$adresse,$telephone,$id_patient];
         $sql="UPDATE crdtpat.PATIENT SET NOM=?,PRENOM=?,DATENAISS=TO_DATE(?,'dd-mm-yyyy'),TYPE_PATIENT=trim(?),SEXE=trim(?),ADRESSE=trim(?),TELEPHONE=trim(?),LAST_UPDATE=sysdate WHERE ID_PATIENT=?";
         
