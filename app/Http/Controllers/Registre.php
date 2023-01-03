@@ -37,7 +37,7 @@ class Registre extends Controller
         $verf_exam = 0;
      
         $donne=[$num_arriv,$date_arriv,$id_patient,$verf_exam];
-        $sqlInsert="INSERT INTO crdtpat.REGISTRE (NUM_ARRIV,DATE_ARRIV,ID_PATIENT,VERF_EXAM) values (?,TO_DATE(?,'dd-mm-yyyy'),?,?)";
+        $sqlInsert="INSERT INTO crdtpat.REGISTRE (NUM_ARRIV,DATE_ARRIV,ID_PATIENT,VERF_EXAM,LAST_UPDATE) values (?,TO_DATE(?,'dd-mm-yyyy'),?,?,sysdate)";
         try {
             $requette=DB::insert($sqlInsert,$donne);
             $resultat=[
@@ -59,7 +59,7 @@ class Registre extends Controller
         $dates=date_create();  
         $sqlRegistre="SELECT  to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE to_char(DATE_ARR,'DD/MM/YYYY')=to_char(sysdate,'DD/MM/YYYY') or VERF_EXAMEN=0 order by DATE_ARR,NUMERO ASC";
+        WHERE to_char(DATE_ARR,'DD/MM/YYYY')=to_char(sysdate,'DD/MM/YYYY') or VERF_EXAMEN=0 order by LAST_UPDATE ASC";
         $req=DB::select($sqlRegistre); 
 
         return response()->json($req);
@@ -71,7 +71,7 @@ class Registre extends Controller
         $num_arriv = $req->input("num_arriv");
         $date_arriv = $req->input("date_arriv");
         $id_patient = $req->input("id_patient");
-        $sql="UPDATE crdtpat.REGISTRE SET ID_PATIENT='".$id_patient."' WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+        $sql="UPDATE crdtpat.REGISTRE SET ID_PATIENT='".$id_patient."',LAST_UPDATE=sysdate WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
         
         $requette=DB::update($sql);
         if (!is_null($requette)) {
@@ -95,7 +95,7 @@ class Registre extends Controller
         if ($num_arriv!="")  { $sql=$sql." AND NUMERO='".$num_arriv."'";}
         if ($date_arriv!="") {$sql=$sql." AND DATE_ARR=TO_DATE('".$date_arriv."','dd-mm-yyyy')";}
         if ($id_patient!="") {$sql=$sql." AND ID_PATIENT='".$id_patient."' ";}
-        $sql = $sql ." ORDER BY NUMERO ASC";
+        $sql = $sql ." ORDER BY LAST_UPDATE ASC ";
         $requette=DB::select($sql);
 
         return response()->json($requette);

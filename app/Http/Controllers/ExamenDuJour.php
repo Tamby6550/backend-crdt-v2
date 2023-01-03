@@ -11,7 +11,7 @@ class ExamenDuJour extends Controller
     {    
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='0' order by NUMERO DESC";
+        WHERE VERF_EXAMEN='0' order by LAST_UPDATE ASC";
         $req=DB::select($sql); 
 
         return response()->json($req);
@@ -27,7 +27,7 @@ class ExamenDuJour extends Controller
         $donneExam = $req->input("donne");
         $sqlInsert="INSERT INTO MIANDRALITINA.EXAMEN_DETAILS(NUM_FACT,LIB_EXAMEN,CODE_TARIF,QUANTITE,MONTANT,DATE_EXAMEN,TYPE,NUM_ARRIV,DATE_ARRIV) 
         values(?,?,?,REPLACE(?,'.',','),?,sysdate,?,?,TO_DATE(?,'dd-mm-yyyy'))";
-        $sql="UPDATE crdtpat.REGISTRE SET VERF_EXAM=1 WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+        $sql="UPDATE crdtpat.REGISTRE SET VERF_EXAM=1 ,LAST_UPDATE=sysdate WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
         
         for ($i=0; $i < count($donneExam); $i++) { 
             $lib_examen = $donneExam[$i]['lib_examen'];
@@ -69,7 +69,7 @@ class ExamenDuJour extends Controller
     {    
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='1' order by NUMERO DESC";
+        WHERE VERF_EXAMEN='1' order by LAST_UPDATE ASC";
         $req=DB::select($sql); 
 
         return response()->json($req);
@@ -103,7 +103,7 @@ class ExamenDuJour extends Controller
         }
         
         if ($data1==1) {//Ovaina ny registre ho lasa verfexam=0 ,
-            $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM=0 WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+            $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM=0,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
             $req2=DB::update($sql2);
         }
 
@@ -117,6 +117,27 @@ class ExamenDuJour extends Controller
                 'nbrexamen'=>$data1, 
                 'res'=>$sqlNbreExam, 
             ];
+        }
+        return response()->json($resultat);
+    }
+
+    public function updateExamenDetailsCR(Request $req)
+    {
+        $resultat=array();
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $cr_name = $req->input("cr_name");
+       
+        $donne=[$cr_name,$num_arriv,$date_arriv,];
+        $sql="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET CR_NAME=? WHERE NUM_ARRIV=? AND  DATE_ARRIV=TO_DATE(?,'dd-mm-yyyy') ";
+        
+        $requette=DB::update($sql, $donne);
+        if (!is_null($requette)) {
+         $resultat=[
+            "etat"=>'success',
+             "message"=>"Modification éfféctuée",
+             'res'=>$requette 
+         ];
         }
         return response()->json($resultat);
     }
