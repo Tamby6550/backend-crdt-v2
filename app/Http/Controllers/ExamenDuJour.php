@@ -25,8 +25,9 @@ class ExamenDuJour extends Controller
         $num_arriv = $req->input("num_arriv");
         $date_arriv = $req->input("date_arriv");
         $donneExam = $req->input("donne");
-        $sqlInsert="INSERT INTO MIANDRALITINA.EXAMEN_DETAILS(NUM_FACT,LIB_EXAMEN,CODE_TARIF,QUANTITE,MONTANT,DATE_EXAMEN,TYPE,NUM_ARRIV,DATE_ARRIV) 
-        values(?,?,?,REPLACE(?,'.',','),?,sysdate,?,?,TO_DATE(?,'dd-mm-yyyy'))";
+        $cr_name="-";
+        $sqlInsert="INSERT INTO MIANDRALITINA.EXAMEN_DETAILS(NUM_FACT,LIB_EXAMEN,CODE_TARIF,QUANTITE,MONTANT,DATE_EXAMEN,TYPE,NUM_ARRIV,DATE_ARRIV,CR_NAME) 
+        values(?,?,?,REPLACE(?,'.',','),?,sysdate,?,?,TO_DATE(?,'dd-mm-yyyy'),?)";
         $sql="UPDATE crdtpat.REGISTRE SET VERF_EXAM=1 ,LAST_UPDATE=sysdate WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
         
         for ($i=0; $i < count($donneExam); $i++) { 
@@ -35,7 +36,7 @@ class ExamenDuJour extends Controller
             $quantite = $donneExam[$i]['quantite'];
             $montant = $donneExam[$i]['montant'];
             $type_examen = $donneExam[$i]['type_examen'];
-            $donne=[$num_facture,$lib_examen,$code_tarif,$quantite,$montant,$type_examen,$num_arriv,$date_arriv];
+            $donne=[$num_facture,$lib_examen,$code_tarif,$quantite,$montant,$type_examen,$num_arriv,$date_arriv,$cr_name];
             try {
                 $requette=DB::insert($sqlInsert,$donne);
                 $verf=1;
@@ -49,11 +50,11 @@ class ExamenDuJour extends Controller
             $requette=DB::update($sql);
             $resultat=[
                 "etat"=>'success',
-                "message"=>"Enregistrement éfféctuée "
-                // 'num_arriv'=>$num_arriv, 
-                // 'date_arriv'=>$date_arriv, 
-                // 'donneExam'=>$donneExam[0]['lib_examen'],
-                // 'donneExam'=>count($donneExam)
+                "message"=>"Enregistrement éfféctuée ",
+                'num_arriv'=>$num_arriv, 
+                'date_arriv'=>$date_arriv, 
+                'donneExam'=>$donneExam[0]['lib_examen'],
+                'donneExam'=>count($donneExam)
             ];
         }
         else{
@@ -69,25 +70,42 @@ class ExamenDuJour extends Controller
     {    
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='1' order by LAST_UPDATE ASC";
+        WHERE VERF_EXAMEN='1' order by LAST_UPDATE DESC";
         $req=DB::select($sql); 
-
+        
         return response()->json($req);
     }
-
+    
     public function getPatientExamenEff($num_arriv,$date_arriv)
     {    
+        $verf=false;
+        $sql1=" select cr_name from MIANDRALITINA.EXAMEN_DETAILS where NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
         $sql="SELECT ex.*,to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as date_exam FROM MIANDRALITINA.EXAMEN_DETAILS ex WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') order by LIB_EXAMEN DESC";
         $req=DB::select($sql); 
-
-        return response()->json($req);
+        $req1=DB::select($sql1); 
+        $cr_names = collect($req1)->pluck('cr_name');
+        for ($i=0; $i < count($cr_names); $i++) { 
+            if ($cr_names[$i] =='-') {
+                $verf=true;
+            }
+        }
+       
+        $resultat=[
+            "liste"=>$req,
+            "2"=>count($cr_names),
+            "verf"=>$verf
+        ];
+        return response()->json($resultat);
     }
 
-    public function deleteExamenDetails($num_arriv,$date_arriv,$lib_examen)
+    public function deleteExamenDetails(Request $req)
     {
     
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $lib_examen = $req->input("lib_examen");
         //Ovaina / ny tiret rehetra raha misy
-        $lib_examen = str_replace('-', '/', $lib_examen);
+        // $lib_examens = str_replace('-', '/', $lib_examen);
         //Supprssion dans examen details
         //Rehefa iray no examen natao, ka supprimena dia mivadika ho lasa tsis examen vita
         $data1=array();
@@ -107,15 +125,16 @@ class ExamenDuJour extends Controller
             $req2=DB::update($sql2);
         }
 
-        $sql="DELETE FROM MIANDRALITINA.EXAMEN_DETAILS WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') AND trim(upper(LIB_EXAMEN)) like trim(upper('%".$lib_examen."%'))";
+        $sql="DELETE FROM MIANDRALITINA.EXAMEN_DETAILS WHERE ROWNUM = 1 AND NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') AND trim(upper(LIB_EXAMEN)) = trim(upper('".$lib_examen."')) ";
         $resultat=[];
         $requette=DB::delete($sql);
         if (!is_null($requette)) {
             $resultat=[
                 "etat"=>'success',
-                "message"=>"Suppression éfféctuée",
+                "message"=>"Examen ".$lib_examen." est bien supprimer !",
                 'nbrexamen'=>$data1, 
                 'res'=>$sqlNbreExam, 
+                'lib'=>$lib_examen
             ];
         }
         return response()->json($resultat);
@@ -127,18 +146,37 @@ class ExamenDuJour extends Controller
         $num_arriv = $req->input("num_arriv");
         $date_arriv = $req->input("date_arriv");
         $cr_name = $req->input("cr_name");
-       
+        $lib_examen = $req->input("lib_examen");
+
         $donne=[$cr_name,$num_arriv,$date_arriv,];
-        $sql="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET CR_NAME=? WHERE NUM_ARRIV=? AND  DATE_ARRIV=TO_DATE(?,'dd-mm-yyyy') ";
+        $sql="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET CR_NAME=? WHERE NUM_ARRIV=? AND  DATE_ARRIV=TO_DATE(?,'dd-mm-yyyy') AND trim(upper(LIB_EXAMEN)) = trim(upper('".$lib_examen."'))";
         
         $requette=DB::update($sql, $donne);
         if (!is_null($requette)) {
          $resultat=[
             "etat"=>'success',
-             "message"=>"Modification éfféctuée",
+             "message"=>"Compte Rendu enregistré",
+             'res'=>$cr_name 
+         ];
+        }
+        return response()->json($resultat);
+    }
+    public function validationExamen(Request $req)
+    {
+        $resultat=array();
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM=2,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+        
+        $req2=DB::update($sql2);
+        if (!is_null($requette)) {
+         $resultat=[
+            "etat"=>'success',
+             "message"=>"Examen Validée",
              'res'=>$requette 
          ];
         }
         return response()->json($resultat);
     }
+   
 }

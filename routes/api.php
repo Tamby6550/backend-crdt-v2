@@ -183,4 +183,8 @@ Route::get("getExamenEff","App\Http\Controllers\ExamenDuJour@getExamenEff");
 Route::get("getPatientExamenEff/{num_arriv}&{date_arriv}","App\Http\Controllers\ExamenDuJour@getPatientExamenEff");
 
 // Suppression
-Route::delete("deleteExamenDetails/{num_arriv}&{date_arriv}&{lib_examen}","App\Http\Controllers\ExamenDuJour@deleteExamenDetails");
+Route::post("deleteExamenDetails","App\Http\Controllers\ExamenDuJour@deleteExamenDetails");
+
+// Validation et enregistrement Compte Rendu
+Route::post("updateExamenDetailsCR","App\Http\Controllers\ExamenDuJour@updateExamenDetailsCR");
+Route::post("validationExamen","App\Http\Controllers\ExamenDuJour@validationExamen");

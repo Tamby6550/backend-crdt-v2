@@ -32,14 +32,24 @@ class Examen extends Controller
     {
         $resultat=array();
         $id_exam = $req->input("id_exam");
+        $id_exam1 = $req->input("id_exam1");
+        $id_exam2 = $req->input("id_exam2");
         $code_tarif = $req->input("code_tarif");
-        $montant = $req->input("montant");
+        $montant_e = $req->input("montant_e");
+        $montant_l1 = $req->input("montant_l1");
+        $montant_l2 = $req->input("montant_l2");
         $desc = $req->input("lib");
         $type = $req->input("type");
-        $tar = $req->input("tarif");
-        $donne=[$id_exam,$code_tarif,$desc,$type,$montant,$tar];
+        $tar_e = $req->input("tarif_e");
+        $tar_l1 = $req->input("tarif_l1");
+        $tar_l2 = $req->input("tarif_l2");
+        $donne=[$id_exam,$code_tarif,$desc,$type,$montant_e,$tar_e];
+        $donne1=[$id_exam1,$code_tarif,$desc,$type,$montant_l1,$tar_l1];
+        $donne2=[$id_exam2,$code_tarif,$desc,$type,$montant_l2,$tar_l2];
         $sqlInsert="INSERT INTO miandralitina.EXAMEN (ID_EXAMEN,CODE_TARIF, LIBELLE,TYPES,MONTANT,TARIF) values (?,trim(upper(?)),trim(upper(?)),trim(upper(?)),trim(?),trim(upper(?)))";
         $requette=DB::insert($sqlInsert,$donne);
+        $requette1=DB::insert($sqlInsert,$donne1);
+        $requette2=DB::insert($sqlInsert,$donne2);
 
         if (!is_null($requette)) {
             $resultat=[
