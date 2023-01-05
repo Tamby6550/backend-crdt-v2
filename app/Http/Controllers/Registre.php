@@ -35,9 +35,10 @@ class Registre extends Controller
         $date_arriv = $req->input("date_arriv");
         $id_patient = $req->input("id_patient");
         $verf_exam = 0;
+        $verf_fact = 0;
      
-        $donne=[$num_arriv,$date_arriv,$id_patient,$verf_exam];
-        $sqlInsert="INSERT INTO crdtpat.REGISTRE (NUM_ARRIV,DATE_ARRIV,ID_PATIENT,VERF_EXAM,LAST_UPDATE) values (?,TO_DATE(?,'dd-mm-yyyy'),?,?,sysdate)";
+        $donne=[$num_arriv,$date_arriv,$id_patient,$verf_exam,$verf_fact];
+        $sqlInsert="INSERT INTO crdtpat.REGISTRE (NUM_ARRIV,DATE_ARRIV,ID_PATIENT,VERF_EXAM,LAST_UPDATE,VERF_FACT) values (?,TO_DATE(?,'dd-mm-yyyy'),?,?,sysdate,?)";
         try {
             $requette=DB::insert($sqlInsert,$donne);
             $resultat=[
