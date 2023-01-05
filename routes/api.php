@@ -187,4 +187,11 @@ Route::post("deleteExamenDetails","App\Http\Controllers\ExamenDuJour@deleteExame
 
 // Validation et enregistrement Compte Rendu
 Route::post("updateExamenDetailsCR","App\Http\Controllers\ExamenDuJour@updateExamenDetailsCR");
-Route::post("validationExamen","App\Http\Controllers\ExamenDuJour@validationExamen");
+Route::put("validationExamen","App\Http\Controllers\ExamenDuJour@validationExamen");
+
+
+//Get examen effectuée
+Route::get("getExamenEffValide","App\Http\Controllers\ExamenDuJour@getExamenEffValide");
+
+//Recherche
+Route::post("getRehercheExamenEffValide","App\Http\Controllers\ExamenDuJour@getRehercheExamenEffValide");

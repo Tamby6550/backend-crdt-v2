@@ -169,14 +169,47 @@ class ExamenDuJour extends Controller
         $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM=2,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
         
         $req2=DB::update($sql2);
-        if (!is_null($requette)) {
+        if (!is_null($req2)) {
          $resultat=[
             "etat"=>'success',
-             "message"=>"Examen Validée",
-             'res'=>$requette 
+             "message"=>"Examen(s) Validés",
+             'res'=>$num_arriv ,
+             'date'=>$date_arriv ,
+             'req'=>$sql2 
          ];
         }
         return response()->json($resultat);
+    }
+
+
+    public function getExamenEffValide()//Vef_examen dans registre est 2
+    {    
+        $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
+        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
+        WHERE VERF_EXAMEN='2' order by LAST_UPDATE DESC";
+        $req=DB::select($sql); 
+        
+        return response()->json($req);
+    }
+    public function getRehercheExamenEffValide(Request $req)//Recherche Vef_examen dans registre est 2
+    {    
+        $numero_arr = $req->input("numero_arr");
+        $date_arr = $req->input("date_arr");
+        $date_naiss = $req->input("date_naiss");
+        $nom = $req->input("nom");
+
+        $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
+        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
+        WHERE VERF_EXAMEN='2'";
+        
+        if ($numero_arr!="")          {$sql=$sql." AND NUMERO='".$numero_arr."' ";}
+        if ($date_arr!="")        {$sql=$sql." AND trunc(DATE_ARR)=TO_DATE('".$date_arr."','dd-mm-yyyy')";}
+        if ($date_naiss!="")    {$sql=$sql." AND trunc(DATE_NAISS)=TO_DATE('".$date_naiss."','dd-mm-yyyy')";}
+        if ($nom!="")          {$sql=$sql." AND upper(NOM) like upper('%".$nom."%') ";}
+
+        $sql = $sql ." ORDER BY LAST_UPDATE DESC ";
+        $requette=DB::select($sql);
+        return response()->json($requette);
     }
    
 }
