@@ -79,22 +79,27 @@ class ExamenDuJour extends Controller
     public function getPatientExamenEff($num_arriv,$date_arriv)
     {    
         $verf=false;
-        $sql1=" select cr_name from MIANDRALITINA.EXAMEN_DETAILS where NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
+        $sql1=" select cr_name,Type as type from MIANDRALITINA.EXAMEN_DETAILS where NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
         $sql="SELECT ex.*,to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as date_exam FROM MIANDRALITINA.EXAMEN_DETAILS ex WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') order by LIB_EXAMEN DESC";
         $req=DB::select($sql); 
         $req1=DB::select($sql1); 
         $cr_names = collect($req1)->pluck('cr_name');
+        $types = collect($req1)->pluck('type');
         for ($i=0; $i < count($cr_names); $i++) { 
-            if ($cr_names[$i] =='-') {
-                $verf=true;
-            }
+            if ($types[$i] !="ECG" ) {
+                if ( $types[$i] !="PANORAMIQUE DENTAIRE") {
+                        if ( $cr_names[$i] =='-') {
+                            $verf=true;
+                        }
+                    }
+                }
         }
-       
+        
         $resultat=[
-            "liste"=>$req,
-            "2"=>count($cr_names),
-            "verf"=>$verf
-        ];
+                "liste"=>$req,
+                "2"=>count($cr_names),
+                "verf"=>$verf,
+            ];
         return response()->json($resultat);
     }
 
@@ -182,7 +187,8 @@ class ExamenDuJour extends Controller
     }
 
 
-    public function getExamenEffValide()//Vef_examen dans registre est 2
+    //Vef_examen dans registre est 2
+    public function getExamenEffValide()
     {    
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
@@ -191,7 +197,9 @@ class ExamenDuJour extends Controller
         
         return response()->json($req);
     }
-    public function getRehercheExamenEffValide(Request $req)//Recherche Vef_examen dans registre est 2
+
+    //Recherche Vef_examen dans registre est 2
+    public function getRehercheExamenEffValide(Request $req)
     {    
         $numero_arr = $req->input("numero_arr");
         $date_arr = $req->input("date_arr");

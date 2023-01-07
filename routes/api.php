@@ -201,3 +201,6 @@ Route::post("getRehercheExamenEffValide","App\Http\Controllers\ExamenDuJour@getR
 
 //Get Non Facturé
 Route::get("getNonFacture","App\Http\Controllers\Facture@getNonFacture");
+
+//Get examen non facture
+Route::get("getPatientExamenFacture/{num_arriv}&{date_arriv}","App\Http\Controllers\Facture@getPatientExamenFacture");
