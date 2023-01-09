@@ -55,6 +55,27 @@ class Prescripteur extends Controller
         ]; 
         return response()->json($resultat);
     }
+
+    public function getPrescripteurF()
+    {
+        $data1=array();
+        $sqlIdExam="SELECT nvl(count(CODE_PRESC),0) as nbenreg FROM crdtpat.PRESCRIPTEUR ";
+        $sql="SELECT CODE_PRESC,initcap(upper(TITRE||' '||NOM)) as NOM,PHONE1,PHONE2,MOBILE,ADRESSE FROM crdtpat.PRESCRIPTEUR ORDER BY LAST_UPDATE ASC";
+        $req1=DB::select($sqlIdExam);
+        $requette=DB::select($sql);
+        foreach($req1 as $row){
+            $data1=$row;
+        }
+        foreach($data1 as $row){
+            $data1=$row;
+        }
+        
+        $resultat=[
+            'nbenreg'=>$data1,
+            'all'=>$requette
+        ]; 
+        return response()->json($resultat);
+    }
     public function getPrescripteurFact()
     {
         $sql="SELECT CODE_PRESC,initcap(upper(TITRE||' '||NOM)) as NOM,PHONE1,PHONE2,MOBILE,ADRESSE FROM PRESCRIPTEUR ORDER BY CODE_PRESC ASC";

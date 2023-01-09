@@ -72,7 +72,28 @@ class ClientFact extends Controller
             'nbenreg'=>$data1,
             'all'=>$req2
         ]; 
-        return response()->json($resultat);    }
+        return response()->json($resultat);    
+    }
+    public function getClientFactF()
+    {
+        $data1=array();
+        $sqlIdExam="SELECT nvl(count(code_client),0) as nbenreg FROM MIANDRALITINA.client ";
+        $sql = "SELECT code_client,nom,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description,rc,stat,cif,nif from MIANDRALITINA.client  order by code_client  asc   ";
+        $req1=DB::select($sqlIdExam);
+        $req2 = DB::select($sql);
+        foreach($req1 as $row){
+            $data1=$row;
+        }
+        foreach($data1 as $row){
+            $data1=$row;
+        }
+        
+        $resultat=[
+            'nbenreg'=>$data1,
+            'all'=>$req2
+        ]; 
+        return response()->json($resultat);    
+    }
 
     public function rechercheClientFact(Request $req)
     {

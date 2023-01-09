@@ -37,6 +37,7 @@ Route::post("login","App\Http\Controllers\LoginCrdt@login");
 Route::post("insertPrescripteur","App\Http\Controllers\Prescripteur@insertPrescripteur");
 //GetAll
 Route::get("getPrescripteur","App\Http\Controllers\Prescripteur@getPrescripteur");
+Route::get("getPrescripteurF","App\Http\Controllers\Prescripteur@getPrescripteurF");
 //Recherche
 Route::post("recherchePrescripteur","App\Http\Controllers\Prescripteur@recherchePrescripteur");
 // Suppression
@@ -100,6 +101,7 @@ Route::post("ajoutFichierDoc","App\Http\Controllers\Consultation@ajoutFichierDoc
 Route::post("insertClient","App\Http\Controllers\ClientFact@insertClient");
 //GetAll
 Route::get("getClientFact","App\Http\Controllers\ClientFact@getClientFact");
+Route::get("getClientFactF","App\Http\Controllers\ClientFact@getClientFactF");
 // Recherche Client Fact 
 Route::post("rechercheClientFact","App\Http\Controllers\ClientFact@rechercheClientFact");
 // Suppression
@@ -204,3 +206,9 @@ Route::get("getNonFacture","App\Http\Controllers\Facture@getNonFacture");
 
 //Get examen non facture
 Route::get("getPatientExamenFacture/{num_arriv}&{date_arriv}","App\Http\Controllers\Facture@getPatientExamenFacture");
+
+//Get idFacture
+Route::get("getPageFacture","App\Http\Controllers\Facture@getPageFacture");
+
+// Changement Tarif
+Route::put("changmentTarif","App\Http\Controllers\Facture@changmentTarif");
