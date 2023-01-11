@@ -39,11 +39,11 @@ class Facture extends Controller
     }
 
     //Affiche zavtr ilaina
-    public function getPageFacture()
+    public function getPageFacture($num_arriv,$date_arriv)
     {
         $resultat=array();
         $data1=array();
-        $sqlIdFacture="SELECT MIANDRALITINA.FORMAT_NUM(SYSDATE)  as num_facture,sysdate as datej FROM DUAL";
+        $sqlIdFacture="SELECT MIANDRALITINA.FORMAT_NUM(SYSDATE)  as num_facture,sysdate as datej,ls.TYPE_PATIENT as tarif FROM CRDTPAT.LISTEREGISTRE ls where ls.DATE_ARR=TO_DATE('".$date_arriv."','dd-mm-yyyy') and ls.NUMERO='".$num_arriv."'";
         $req1=DB::select($sqlIdFacture);
         foreach($req1 as $row){
             $data1=$row;

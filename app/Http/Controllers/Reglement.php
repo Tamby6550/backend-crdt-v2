@@ -65,6 +65,20 @@ class Reglement extends Controller
         return response()->json($requette);
     }
 
+    public function rechercheReglementParUser($indication)
+    {
+        $req="select REGLEMENT_ID,LIBELLE,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description from MIANDRALITINA.REGLEMENT where REGLEMENT_ID<>'3' order by REGLEMENT_ID  ASC";	
+        $req1="select REGLEMENT_ID,LIBELLE,decode(DESCRIPTION,'null',' ',null,' ',DESCRIPTION) as description from MIANDRALITINA.REGLEMENT where (REGLEMENT_ID<>'2' and REGLEMENT_ID<>'1')   order by REGLEMENT_ID  ASC";	
+
+        if ($indication=='admin') {
+          $req=$req1;
+        }
+
+        $requette=DB::select($req);
+
+        return response()->json($requette);
+    }
+
     public function updateReglementFact(Request $req)
     {
         $resultat=array();

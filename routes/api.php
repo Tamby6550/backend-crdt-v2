@@ -135,12 +135,13 @@ Route::post("rechercheReglementFact","App\Http\Controllers\Reglement@rechercheRe
 Route::put("updateReglementFact","App\Http\Controllers\Reglement@updateReglementFact");
 // Suppression
 Route::delete("deleteReglementFact/{code_presc}","App\Http\Controllers\Reglement@deleteReglementFact");
-
+Route::get("rechercheReglementParUser/{indication}","App\Http\Controllers\Reglement@rechercheReglementParUser");
 
 
 //----------------------------- Saisie Reglement Fact ------------------------------//
 //GetAll
 Route::get("getSaisieReglementFact","App\Http\Controllers\SaisieReglement@getSaisieReglementFact");
+
 //Recherche saisie reglement
 Route::post("rechercheSaisieReglement","App\Http\Controllers\SaisieReglement@rechercheSaisieReglement");
 //Affiche details saisie reglement
@@ -149,6 +150,7 @@ Route::post("afficheDetailsSaisieReglement","App\Http\Controllers\SaisieReglemen
 Route::post("insertReglementDetails","App\Http\Controllers\SaisieReglement@insertReglementDetails");
 //Affiche list paiment details saisie reglement
 Route::post("affichePaimentDetailsReglmnt","App\Http\Controllers\SaisieReglement@affichePaimentDetailsReglmnt");
+
 
 
 //----------------------------- Information Registre du jour ------------------------------//
@@ -208,7 +210,7 @@ Route::get("getNonFacture","App\Http\Controllers\Facture@getNonFacture");
 Route::get("getPatientExamenFacture/{num_arriv}&{date_arriv}","App\Http\Controllers\Facture@getPatientExamenFacture");
 
 //Get idFacture
-Route::get("getPageFacture","App\Http\Controllers\Facture@getPageFacture");
+Route::get("getPageFacture/{num_arriv}&{date_arriv}","App\Http\Controllers\Facture@getPageFacture");
 
 // Changement Tarif
 Route::put("changmentTarif","App\Http\Controllers\Facture@changmentTarif");
