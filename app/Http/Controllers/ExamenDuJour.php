@@ -188,11 +188,11 @@ class ExamenDuJour extends Controller
 
 
     //Vef_examen dans registre est 2
-    public function getExamenEffValide()
+    public function getExamenEffValide()//le 5 dernier jour qui effectue leur examen
     {    
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='2' order by LAST_UPDATE DESC";
+        WHERE trunc(LAST_UPDATE)>=trunc(sysdate-5) AND VERF_EXAMEN='2' order by LAST_UPDATE,NUMERO DESC";
         $req=DB::select($sql); 
         
         return response()->json($req);
@@ -208,14 +208,14 @@ class ExamenDuJour extends Controller
 
         $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='2'";
+        WHERE VERF_EXAMEN='2' ";
         
         if ($numero_arr!="")          {$sql=$sql." AND NUMERO='".$numero_arr."' ";}
         if ($date_arr!="")        {$sql=$sql." AND trunc(DATE_ARR)=TO_DATE('".$date_arr."','dd-mm-yyyy')";}
         if ($date_naiss!="")    {$sql=$sql." AND trunc(DATE_NAISS)=TO_DATE('".$date_naiss."','dd-mm-yyyy')";}
         if ($nom!="")          {$sql=$sql." AND upper(NOM) like upper('%".$nom."%') ";}
 
-        $sql = $sql ." ORDER BY LAST_UPDATE DESC ";
+        $sql = $sql ." ORDER BY LAST_UPDATE,NUMERO DESC ";
         $requette=DB::select($sql);
         return response()->json($requette);
     }

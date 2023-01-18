@@ -214,3 +214,12 @@ Route::get("getPageFacture/{num_arriv}&{date_arriv}","App\Http\Controllers\Factu
 
 // Changement Tarif
 Route::put("changmentTarif","App\Http\Controllers\Facture@changmentTarif");
+
+//Enregistrer
+Route::post("insertFacture","App\Http\Controllers\Facture@insertFacture");
+
+//Get  Facturé
+Route::get("getEffectFacture","App\Http\Controllers\Facture@getEffectFacture");
+
+//Get  INFO FACTURE PATIENT
+Route::get("getInfoPatientFacture/{num_facture}","App\Http\Controllers\Facture@getInfoPatientFacture");

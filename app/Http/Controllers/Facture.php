@@ -63,6 +63,7 @@ class Facture extends Controller
         $data1=array();
         $nouveauMontant=0;
 
+        //Mis a jour Type patient
         $sqlUpdatePatient="UPDATE crdtpat.PATIENT SET TYPE_PATIENT=trim(?),LAST_UPDATE=sysdate WHERE ID_PATIENT=?";
 
         $sqlUpdate="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET MONTANT=? WHERE NUM_ARRIV=? AND  DATE_ARRIV=TO_DATE(?,'dd-mm-yyyy') AND trim(upper(LIB_EXAMEN)) = trim(upper(?))";
@@ -111,5 +112,126 @@ class Facture extends Controller
         }
         return response()->json($resultat);
 
+    }
+    
+    public function insertFacture(Request $req)
+    {
+        
+        $resultat=array();
+        $num_facture = $req->input("num_facture");
+        $date_facture = $req->input("date_facture");
+        $patient = $req->input("patient");
+        $type = $req->input("type");
+        $avoir = $req->input("type_facture");
+        $reglement_id = $req->input("reglement_id");
+        $montantreglement = $req->input("montantreglement");
+        $montantreglement = str_replace(" ", "", $montantreglement);
+        $montantreglement = round($montantreglement, 0);
+
+
+        $rib = $req->input("rib");
+        $code_cli = $req->input("code_cli");
+        $nom_cli = $req->input("nom_cli");
+        $pec = $req->input("pec");
+        $remise = $req->input("remise");
+        $code_presc = $req->input("code_presc");
+        $nom_presc = $req->input("nom_presc");
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+
+        $montant_brute = $req->input("montant_brute");
+        $montant_brute = str_replace(" ", "", $montant_brute);
+        $montant_brute = round($montant_brute, 0);
+
+        $montant_net = $req->input("montant_net");
+        $montant_net = str_replace(" ", "", $montant_net);
+        $montant_net = round($montant_net, 0);
+
+        $montant_patient = $req->input("montant_patient");
+        $montant_patient = str_replace(" ", "", $montant_patient);
+        $montant_patient = round($montant_patient, 0);
+
+        
+
+
+        $montant_pech = $req->input("montant_pech");
+        $montant_pech = str_replace(" ", "", $montant_pech);
+        $montant_pech = round($montant_pech, 0);
+
+        
+        
+        $sqlInsertFacture="INSERT INTO MIANDRALITINA.FACTURE (NUM_FACT,DATY,TYPE_CLIENT,TYPE_FACTURE,PATIENT,REGLEMENT_ID,REMISE,PEC,RIB,CODE_CLIENT,CODE_PRESC,MONTANT_BRUTE,MONTANT_NET,MONTANT_PATIENT,MONTANT_PEC) 
+        values ('".$num_facture."',sysdate,'".$type."','".$avoir."','".$patient."','".$reglement_id."','".$remise."','".$pec."','".$rib."','".$code_cli."','".$code_presc."','".$montant_brute."','".$montant_net."','".$montant_patient."','".$montant_pech."')";
+        
+
+        $sqlInsertReglementId="INSERT INTO MIANDRALITINA.REGLEMENT_DETAILS(ID_REGLEMENT_DETAILS,NUM_FACT,REGLEMENT_ID,RIB,MONTANT,DATE_REGLEMENT,TYPE_RGLMT) 
+        values ('".$num_facture.'-'.$reglement_id."','".$num_facture."','".$reglement_id."','".$rib."','".$montantreglement."',sysdate,'P')";
+
+
+        $sqlUpdateExamen="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET NUM_FACT=? WHERE NUM_ARRIV=? AND  DATE_ARRIV=TO_DATE(?,'dd-mm-yyyy') ";
+        $donne=[$num_facture,$num_arriv,$date_arriv];
+        $sql2="UPDATE crdtpat.REGISTRE SET VERF_FACT=1,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+        
+        
+        try {
+            //Insertion Facture
+            $requetteFact=DB::insert($sqlInsertFacture);
+            
+            //Insertion Reglement_Id
+            $requetteRId=DB::insert($sqlInsertReglementId);
+            
+            //Update table examen_details pour le numéro facture
+            $req2=DB::update($sqlUpdateExamen,$donne);
+
+            //modif registre
+            $req2=DB::update($sql2);
+            $resultat=[
+                "etat"=>'success',
+                "message"=>"Facture bien éfféctuée !",
+                'res'=>$montant_patient ,
+                'rid'=>$montant_pech 
+            ];
+
+        } catch (\Throwable $th) {
+            $resultat=[
+                "success"=>false, 
+                "message"=>"Erreur sur l'enregistrement !" ,
+                "erreur"=>$th
+            ];
+        }
+        
+        return response()->json($resultat);
+    }
+
+    //Vef_examen dans registre est 2 et verf_fact = 1
+    public function getEffectFacture()
+    {    
+        //Ny Type facture de avy @facture fa tsy patient eto
+        $sql="SELECT R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
+        to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(R.DATE_ARRIV,'DD/MM/YYYY') as date_arr,to_char(R.DATE_ARRIV,'MM/DD/YYYY') as date_arrive,
+		initcap(P.NOM||' '||nvl(P.PRENOM,' ')) as NOM,P.TYPE_PATIENT AS TYPE_PATIENT,
+		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
+		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
+		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
+        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,
+		R.LAST_UPDATE as LAST_UPDATE
+		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
+		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
+        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
+		ORDER BY  R.DATE_ARRIV DESC";
+        $req=DB::select($sql); 
+        
+        return response()->json($req);
+    }
+    public function getInfoPatientFacture($num_facture)
+    {    
+        $data1=array();
+        $num_facture= str_replace("-", "/", $num_facture);
+        $sql="Select * from MIANDRALITINA.BILLING where NUM_FACT='".$num_facture."'";
+        $req=DB::select($sql); 
+        foreach($req as $row){
+            $data1=$row;
+        }
+        return response()->json($data1);
     }
 }
