@@ -171,7 +171,8 @@ class ExamenDuJour extends Controller
         $resultat=array();
         $num_arriv = $req->input("num_arriv");
         $date_arriv = $req->input("date_arriv");
-        $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM=2,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+        $verfexamen = $req->input("verfexamen");
+        $sql2="UPDATE crdtpat.REGISTRE SET VERF_EXAM='".$verfexamen."',LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
         
         $req2=DB::update($sql2);
         if (!is_null($req2)) {
@@ -190,7 +191,7 @@ class ExamenDuJour extends Controller
     //Vef_examen dans registre est 2
     public function getExamenEffValide()//le 5 dernier jour qui effectue leur examen
     {    
-        $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
+        $sql="SELECT VERF_FACT, to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
         NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
         WHERE trunc(LAST_UPDATE)>=trunc(sysdate-5) AND VERF_EXAMEN='2' order by LAST_UPDATE,NUMERO DESC";
         $req=DB::select($sql); 
