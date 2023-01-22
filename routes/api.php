@@ -224,6 +224,9 @@ Route::post("insertReglementFacture","App\Http\Controllers\Facture@insertRegleme
 //Get  Facturé
 Route::get("getEffectFacture","App\Http\Controllers\Facture@getEffectFacture");
 
+//Get  Facture réglé
+Route::get("getFactureRegler","App\Http\Controllers\Facture@getFactureRegler");
+
 //Get  INFO FACTURE PATIENT
 Route::get("getInfoPatientFacture/{num_facture}","App\Http\Controllers\Facture@getInfoPatientFacture");
 

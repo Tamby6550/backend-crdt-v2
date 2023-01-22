@@ -182,8 +182,7 @@ class Facture extends Controller
             $resultat=[
                 "etat"=>'success',
                 "message"=>"Facture bien éfféctuée !",
-                'res'=>$montant_patient ,
-                'rid'=>$montant_pech 
+               
             ];
 
         } catch (\Throwable $th) {
@@ -210,16 +209,62 @@ class Facture extends Controller
 
         $rib = $req->input("rib");
 
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
 
+        $regle='0';
         $sqlInsertReglementId="INSERT INTO MIANDRALITINA.REGLEMENT_DETAILS(ID_REGLEMENT_DETAILS,NUM_FACT,REGLEMENT_ID,RIB,MONTANT,DATE_REGLEMENT,TYPE_RGLMT) 
         values ('".$num_facture.'-'.$reglement_id."','".$num_facture."','".$reglement_id."','".$rib."','".$montantreglement."',sysdate,'".$type_reglmnt."')";
+        try {
 
         //Insertion Reglement_Id
         $requetteRId=DB::insert($sqlInsertReglementId);
+
+        //Mijery ny reste, raha 0 de  payé zany hoe miova table registre
+        $data1=array();
+        $sql="select RESTE as reste from MIANDRALITINA.billing1 where num_fact='".$num_facture."' ";
+        $req=DB::select($sql); 
+
+        foreach($req as $row){
+            $data1=$row;
+        }
+        foreach($data1 as $row){
+            $data1=$row;
+        }
+        if ($data1==0) {
+            $sql2="UPDATE crdtpat.REGISTRE SET VERF_FACT=2,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+            $req2=DB::update($sql2);
+            $regle='1';
+        }
+
+        if ($regle=='1') {
+            $resultat=[
+                "etat"=>'success',
+                "message"=>"Enregistrement bien éfféctuée avec facture réglé !",
+                'res'=>$sqlInsertReglementId ,
+                'regle'=>$regle
+            ];
+        }else{
+            $resultat=[
+                "etat"=>'success',
+                "message"=>"Enregistrement bien éfféctuée !",
+                'res'=>$sqlInsertReglementId ,
+                'regle'=>$regle
+                
+            ];
+        }
+        } catch (\Throwable $th) {
+            $resultat=[
+                "success"=>false, 
+                "message"=>"Erreur sur l'enregistrement !" ,
+                "erreur"=>$th
+            ];
+        }
+        return response()->json($resultat);
     }
 
 
-    //Vef_examen dans registre est 2 et verf_fact = 1
+    //Vef_examen dans registre est 2 et verf_fact = 1, facture non regler
     public function getEffectFacture()
     {    
         //Ny Type facture de avy @facture fa tsy patient eto
@@ -233,6 +278,26 @@ class Facture extends Controller
 		R.LAST_UPDATE as LAST_UPDATE
 		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
+        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
+		ORDER BY  RRF.NUM_FACT DESC";
+        $req=DB::select($sql); 
+        
+        return response()->json($req);
+    }
+
+    public function getFactureRegler()
+    {    
+        //Ny Type facture de avy @facture fa tsy patient eto
+        $sql="SELECT R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
+        to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(R.DATE_ARRIV,'DD/MM/YYYY') as date_arr,to_char(R.DATE_ARRIV,'MM/DD/YYYY') as date_arrive,
+		initcap(P.NOM||' '||nvl(P.PRENOM,' ')) as NOM,P.TYPE_PATIENT AS TYPE_PATIENT,
+		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
+		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
+		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
+        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,
+		R.LAST_UPDATE as LAST_UPDATE
+		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
+		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='2' AND
         R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
 		ORDER BY  RRF.NUM_FACT DESC";
         $req=DB::select($sql); 
