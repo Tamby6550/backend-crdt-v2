@@ -218,8 +218,17 @@ Route::put("changmentTarif","App\Http\Controllers\Facture@changmentTarif");
 //Enregistrer
 Route::post("insertFacture","App\Http\Controllers\Facture@insertFacture");
 
+//Reglement
+Route::post("insertReglementFacture","App\Http\Controllers\Facture@insertReglementFacture");
+
 //Get  Facturé
 Route::get("getEffectFacture","App\Http\Controllers\Facture@getEffectFacture");
 
 //Get  INFO FACTURE PATIENT
 Route::get("getInfoPatientFacture/{num_facture}","App\Http\Controllers\Facture@getInfoPatientFacture");
+
+//Get  INFO FACTURE REGLEMENT
+Route::get("getInfoPatientReglementFacture/{num_facture}","App\Http\Controllers\Facture@getInfoPatientReglementFacture");
+
+//Get  LIST REGLEMENTS
+Route::get("getListReglementFacture/{num_facture}","App\Http\Controllers\Facture@getListReglementFacture");
