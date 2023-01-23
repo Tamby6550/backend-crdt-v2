@@ -335,10 +335,11 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="SELECT NUM_FACT,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
+        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr ,NUM_FACT,miandralitina.Number_To_Words(MONTANT,'F',1) as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
         TYPE_RGLMT FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT='".$num_facture."' and REGLEMENT_ID<>'0' order by DATE_REGLEMENT desc ";
         $req=DB::select($sql); 
-       
+        
         return response()->json($req);
     }
+   
 }
