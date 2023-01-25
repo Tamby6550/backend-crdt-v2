@@ -235,3 +235,9 @@ Route::get("getInfoPatientReglementFacture/{num_facture}","App\Http\Controllers\
 
 //Get  LIST REGLEMENTS
 Route::get("getListReglementFacture/{num_facture}","App\Http\Controllers\Facture@getListReglementFacture");
+Route::get("testAPL","App\Http\Controllers\Facture@testAPL");
+
+// Modifier reglement
+Route::put("modifReglementFacture","App\Http\Controllers\Facture@modifReglementFacture");
+// Modifier pec remise
+Route::put("modifPecRemiseFacture","App\Http\Controllers\Facture@modifPecRemiseFacture");

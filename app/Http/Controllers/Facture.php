@@ -22,7 +22,16 @@ class Facture extends Controller
         $sql1="select sum(ex.QUANTITE*ex.MONTANT) as total from MIANDRALITINA.EXAMEN_DETAILS ex where ex.NUM_ARRIV='".$num_arriv."' AND ex.DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
         $requette=DB::select($sql1);
 
-        $sql="SELECT ex.*,to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as date_exam FROM MIANDRALITINA.EXAMEN_DETAILS ex WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') order by LIB_EXAMEN DESC";
+        $sql2="SELECT  
+        (select  PEC from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as pec,
+        (select  REMISE from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as remise
+        FROM MIANDRALITINA.EXAMEN_DETAILS ex 
+        WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')";
+        $requett2=DB::select($sql2);
+        $firstRow = get_object_vars($requett2[0]);
+
+        $sql="SELECT ex.*,to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as date_exam 
+        FROM MIANDRALITINA.EXAMEN_DETAILS ex WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') order by LIB_EXAMEN DESC";
         $req=DB::select($sql); 
         foreach($requette as $row){
             $data1=$row;
@@ -33,7 +42,9 @@ class Facture extends Controller
         
         $resultat=[
             'total'=>$data1,
-            'all'=>$req
+            'all'=>$req,
+            'pec_rmise'=>$firstRow
+
         ]; 
         return response()->json($resultat);
     }
@@ -268,14 +279,15 @@ class Facture extends Controller
     public function getEffectFacture()
     {    
         //Ny Type facture de avy @facture fa tsy patient eto
-        $sql="SELECT R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
+        $sql="SELECT  R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
         to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(R.DATE_ARRIV,'DD/MM/YYYY') as date_arr,to_char(R.DATE_ARRIV,'MM/DD/YYYY') as date_arrive,
 		initcap(P.NOM||' '||nvl(P.PRENOM,' ')) as NOM,P.TYPE_PATIENT AS TYPE_PATIENT,
 		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
 		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
 		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
         to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,
-		R.LAST_UPDATE as LAST_UPDATE
+		R.LAST_UPDATE as LAST_UPDATE,
+    (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0') as nbreRgl
 		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
         R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
@@ -335,11 +347,137 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr ,NUM_FACT,miandralitina.Number_To_Words(MONTANT,'F',1) as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
+        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr,REGLEMENT_ID as regl_id ,NUM_FACT,miandralitina.Number_To_Words(MONTANT,'F',1) as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
         TYPE_RGLMT FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT='".$num_facture."' and REGLEMENT_ID<>'0' order by DATE_REGLEMENT desc ";
         $req=DB::select($sql); 
         
+        $resultat=[
+            "etat"=>'success',
+            "message"=>"Modification règlement !",
+            'res'=>$sql ,
+            'req'=>$req,
+        ];
         return response()->json($req);
     }
-   
+    public function modifReglementFacture(Request $req)
+    {
+        $num_facture = $req->input("num_facture");
+        $reglement_id = $req->input("reglement_id");
+
+        $type_reglmnt=$req->input("type_reglmnt");
+
+        $montantreglement = $req->input("montantreglement");
+        $montantreglement = str_replace(" ", "", $montantreglement);
+        $montantreglement = round($montantreglement, 0);
+
+        $rib = $req->input("rib");
+        $date_reglmnt = $req->input("date_reglmnt");
+
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+
+        $regle='0';
+        $sqlInsertReglementId="UPDATE MIANDRALITINA.REGLEMENT_DETAILS SET REGLEMENT_ID=".$reglement_id." , RIB='".$rib."' , TYPE_RGLMT='".$type_reglmnt."'  
+        WHERE MONTANT=".$montantreglement." AND NUM_FACT='".$num_facture."' AND  to_char(DATE_REGLEMENT,'DD/MM/YYYY')='".$date_reglmnt."'";
+        try {
+
+        //Mis a jour Reglement
+        $requetteRId=DB::update($sqlInsertReglementId);
+
+
+         $data1=array();
+         $sql="select OBS_FACT from crdtpat.REGISTRE where NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+         $reqreg=DB::select($sql); 
+ 
+        foreach($reqreg as $row){
+            $data1=$row;
+        }
+        foreach($data1 as $row){
+            $data1=$row;
+        }
+
+        // $reobs=array();
+        // // MD-R : Modif Reglement
+        if ( is_numeric($data1)) {
+            $sql2="UPDATE crdtpat.REGISTRE SET OBS_FACT='MD-R-1',LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+            $req2=DB::update($sql2);
+            $data1='hhaha';
+        }else{
+            $reobs=str_split($data1);
+            $obs_fact='MD-R-'.round($reobs['5']+1);
+            $sql2="UPDATE crdtpat.REGISTRE SET OBS_FACT='".$obs_fact."',LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+            $req2=DB::update($sql2);
+            $data1='heelo';
+        }
+        
+
+        $resultat=[
+            "etat"=>'success',
+            "message"=>"Modification règlement !",
+            'res'=>$data1
+        ];
+        } catch (\Throwable $th) {
+            $resultat=[
+                "success"=>false, 
+                "message"=>"Erreur sur modification !" ,
+                "erreur"=>$th,
+                "sql"=>$sqlInsertReglementId
+            ];
+        }
+       
+        return response()->json($resultat);
+    }
+    public function modifPecRemiseFacture(Request $req)
+    {
+        $num_facture = $req->input("num_facture");
+        $pec = $req->input("pec");
+        $remise = $req->input("remise");
+
+
+        $montant_net = $req->input("montant_net");
+        $montant_net = str_replace(" ", "", $montant_net);
+        $montant_net = round($montant_net, 0);
+
+        $montant_patient = $req->input("montant_patient");
+        $montant_patient = str_replace(" ", "", $montant_patient);
+        $montant_patient = round($montant_patient, 0);
+
+        $montant_pech = $req->input("montant_pech");
+        $montant_pech = str_replace(" ", "", $montant_pech);
+        $montant_pech = round($montant_pech, 0);
+
+        $sqlmdpecremise="UPDATE MIANDRALITINA.FACTURE SET PEC=".$pec." , REMISE='".$remise."' , MONTANT_NET='".$montant_net."', MONTANT_PATIENT='".$montant_patient."', MONTANT_PEC='".$montant_pech."'WHERE NUM_FACT='".$num_facture."'";
+        try {
+
+        //Mis a jour Reglement
+        $requetteUpdate=DB::update($sqlmdpecremise);
+
+        $resultat=[
+            "etat"=>'success',
+            "message"=>"Modification facture !",
+        ];
+        } catch (\Throwable $th) {
+            $resultat=[
+                "success"=>false, 
+                "message"=>"Erreur sur modification !" ,
+                "erreur"=>$th
+            ];
+        }
+       
+        return response()->json($resultat);
+    }
+   public function testAPL()
+   {
+    $string='MR-L-1';
+    $reobs=str_split($string);
+    $reobs['5']=round($reobs['5']+1);
+
+    $resultat=[
+        "success"=>false, 
+        "message"=>"Erreur sur l'enregistrement !" ,
+        "erreur"=>$reobs
+    ];
+    return response()->json($resultat);
+
+   }
 }
