@@ -285,9 +285,13 @@ class Facture extends Controller
 		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
 		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
 		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
-        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,
+        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,to_char(RRF.DATE_FACTURE,'MM/DD/YYYY') as date_fverf,
 		R.LAST_UPDATE as LAST_UPDATE,
-    (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0') as nbreRgl
+        (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0') as nbreRgl,
+        (SELECT bill.MONTANT_PATIENT  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as totalpat,
+        (SELECT bill.MONTANT_PEC  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as totalpec,
+        (SELECT bill.MONTANT_PATIENT_REGLE  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as rpatient,
+        (SELECT bill.MONTANT_PEC_REGLE  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as rclient
 		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
         R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
@@ -322,7 +326,7 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="Select * from MIANDRALITINA.BILLING1 where NUM_FACT='".$num_facture."'";
+        $sql="Select bill.*,miandralitina.Number_To_Words(MONTANT_NET,'F',1) as net_mtnet,miandralitina.Number_To_Words(MONTANT_PEC,'F',1) as net_pec from MIANDRALITINA.BILLING1 bill where NUM_FACT='".$num_facture."'";
         $req=DB::select($sql); 
         foreach($req as $row){
             $data1=$row;
@@ -343,6 +347,7 @@ class Facture extends Controller
         }
         return response()->json($data1);
     }
+
     public function getListReglementFacture($num_facture)
     {    
         $data1=array();
@@ -359,6 +364,7 @@ class Facture extends Controller
         ];
         return response()->json($req);
     }
+
     public function modifReglementFacture(Request $req)
     {
         $num_facture = $req->input("num_facture");
@@ -465,6 +471,39 @@ class Facture extends Controller
         }
        
         return response()->json($resultat);
+    }
+
+    public function retourFactNonRegleEnNonPaye(Request $req)
+    {
+
+        $num_arriv = $req->input("num_arriv");
+        $date_arriv = $req->input("date_arriv");
+        $num_facture = $req->input("num_facture");
+
+        //Mamafa ny ao @reglement, ilay 0 montant
+        $sqlSupprimeReglmDetails="DELETE FROM miandralitina.REGLEMENT_DETAILS  WHERE NUM_FACT='".$num_facture."'";
+
+        //Mamafa ny ao @facture
+        $sqlSupprimeFacture="DELETE FROM miandralitina.FACTURE  WHERE NUM_FACT='".$num_facture."'";
+
+        //Manao mis a jour ny examen_details ny num_fact
+        $sqlUpdateExamenDetails="UPDATE MIANDRALITINA.EXAMEN_DETAILS SET NUM_FACT='-' WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy') ";
+        
+        //Manao mis a jour ny registre ny verf_fact
+        $sql2="UPDATE crdtpat.REGISTRE SET VERF_FACT=0,LAST_UPDATE=sysdate  WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')  ";
+
+        $requette1=DB::delete($sqlSupprimeReglmDetails);
+        $requette2=DB::delete($sqlSupprimeFacture);
+        $reqUpdate3=DB::update($sqlUpdateExamenDetails);
+        $reqUpdate4=DB::update($sql2);
+
+        $resultat=[
+            "etat"=>'info',
+            "message"=>"Déplacement bien éfféctuée ! ",
+        ];
+       
+        return response()->json($resultat);
+
     }
    public function testAPL()
    {

@@ -239,5 +239,9 @@ Route::get("testAPL","App\Http\Controllers\Facture@testAPL");
 
 // Modifier reglement
 Route::put("modifReglementFacture","App\Http\Controllers\Facture@modifReglementFacture");
+
 // Modifier pec remise
 Route::put("modifPecRemiseFacture","App\Http\Controllers\Facture@modifPecRemiseFacture");
+
+// Modifier retour facture non regle
+Route::put("retourFactNonRegleEnNonPaye","App\Http\Controllers\Facture@retourFactNonRegleEnNonPaye");
