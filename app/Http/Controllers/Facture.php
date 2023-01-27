@@ -149,21 +149,21 @@ class Facture extends Controller
 
         $montant_brute = $req->input("montant_brute");
         $montant_brute = str_replace(" ", "", $montant_brute);
-        $montant_brute = round($montant_brute, 0);
+        $montant_brute = round($montant_brute, 2);
 
         $montant_net = $req->input("montant_net");
         $montant_net = str_replace(" ", "", $montant_net);
-        $montant_net = round($montant_net, 0);
+        $montant_net = round($montant_net, 2);
 
         $montant_patient = $req->input("montant_patient");
         $montant_patient = str_replace(" ", "", $montant_patient);
-        $montant_patient = round($montant_patient, 0);
+        $montant_patient = round($montant_patient, 2);
 
     
 
         $montant_pech = $req->input("montant_pech");
         $montant_pech = str_replace(" ", "", $montant_pech);
-        $montant_pech = round($montant_pech, 0);
+        $montant_pech = round($montant_pech, 2);
 
         
         $sqlInsertFacture="INSERT INTO MIANDRALITINA.FACTURE (NUM_FACT,DATY,TYPE_CLIENT,TYPE_FACTURE,PATIENT,REGLEMENT_ID,REMISE,PEC,RIB,CODE_CLIENT,CODE_PRESC,MONTANT_BRUTE,MONTANT_NET,MONTANT_PATIENT,MONTANT_PEC) 
@@ -216,7 +216,7 @@ class Facture extends Controller
 
         $montantreglement = $req->input("montantreglement");
         $montantreglement = str_replace(" ", "", $montantreglement);
-        $montantreglement = round($montantreglement, 0);
+        $montantreglement = round($montantreglement, 2);
 
         $rib = $req->input("rib");
 
@@ -275,7 +275,7 @@ class Facture extends Controller
     }
 
 
-    //Vef_examen dans registre est 2 et verf_fact = 1, facture non regler
+    //Vef_examen dans registre est 2 et verf_fact = 1, facture non regler, le 3 dernier jour 
     public function getEffectFacture()
     {    
         //Ny Type facture de avy @facture fa tsy patient eto
@@ -287,15 +287,65 @@ class Facture extends Controller
 		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
         to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,to_char(RRF.DATE_FACTURE,'MM/DD/YYYY') as date_fverf,
 		R.LAST_UPDATE as LAST_UPDATE,
+    
         (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0') as nbreRgl,
-        (SELECT bill.MONTANT_PATIENT  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as totalpat,
-        (SELECT bill.MONTANT_PEC  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as totalpec,
-        (SELECT bill.MONTANT_PATIENT_REGLE  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as rpatient,
-        (SELECT bill.MONTANT_PEC_REGLE  FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT ) as rclient
-		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
+        (SELECT bill.MONTANT_PATIENT   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT  AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as totalpat,
+        (SELECT bill.MONTANT_PEC   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as totalpec,
+        (SELECT bill.MONTANT_PATIENT_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as rpatient,
+        (SELECT bill.MONTANT_PEC_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as rclient
+        
+        FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
         R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
+       AND trunc(R.DATE_ARRIV)>=trunc(sysdate-3) 
 		ORDER BY  RRF.NUM_FACT DESC";
+        $req=DB::select($sql); 
+        
+        return response()->json($req);
+    }
+    public function getRechercheEffectFacture(Request $req)
+    {    
+        $num_facture = $req->input("num_facture");
+        $date_facture = $req->input("date_facture");
+        $nom_patient = $req->input("nom_patient");
+        $nom_client = $req->input("nom_client");
+        $numero_arr = $req->input("numero_arr");
+        $date_arr = $req->input("date_arr");
+
+        
+        //Ny Type facture de avy @facture fa tsy patient eto
+        $sql="SELECT  R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
+        to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(R.DATE_ARRIV,'DD/MM/YYYY') as date_arr,to_char(R.DATE_ARRIV,'MM/DD/YYYY') as date_arrive,
+		initcap(P.NOM||' '||nvl(P.PRENOM,' ')) as NOM,P.TYPE_PATIENT AS TYPE_PATIENT,
+		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
+		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
+		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
+        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,to_char(RRF.DATE_FACTURE,'MM/DD/YYYY') as date_fverf,
+		R.LAST_UPDATE as LAST_UPDATE,
+    
+        (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0') as nbreRgl,
+        (SELECT bill.MONTANT_PATIENT   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT  AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as totalpat,
+        (SELECT bill.MONTANT_PEC   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as totalpec,
+        (SELECT bill.MONTANT_PATIENT_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as rpatient,
+        (SELECT bill.MONTANT_PEC_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT AND bill.DATE_ARRIV=RRF.DATE_ARRIV AND bill.NUM_ARRIV=RRF.NUM_ARRIV ) as rclient
+        
+        FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
+		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
+        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV";
+
+        if ($num_facture!="")          {$sql=$sql." AND RRF.NUM_FACT='".$num_facture."' ";}
+        if ($date_facture!="")        {$sql=$sql." AND to_char(RRF.DATE_FACTURE,'DD/MM/YYYY')='".$date_facture."'";} 
+        if ($nom_patient!="")          {$sql=$sql." AND upper(initcap(P.NOM||' '||nvl(P.PRENOM,' '))) like upper('%".$nom_patient."%')  ";}
+
+        if ($nom_client!="")          {
+            $sql=$sql." AND (SELECT bill.CLIENT   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT  AND upper(bill.CLIENT) 
+            like upper('%".$nom_client."%') ) like upper('%".$nom_client."%')";
+        }
+
+        if ($numero_arr!="")    {$sql=$sql." AND  R.NUM_ARRIV='".$numero_arr."' ";}
+        if ($date_arr!="")     {$sql=$sql." AND R.DATE_ARRIV=TO_DATE('".$date_arr."','dd-mm-yyyy') ";}
+
+        $sql = $sql ." ORDER BY  RRF.NUM_FACT DESC";
         $req=DB::select($sql); 
         
         return response()->json($req);
@@ -326,7 +376,12 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="Select bill.*,miandralitina.Number_To_Words(MONTANT_NET,'F',1) as net_mtnet,miandralitina.Number_To_Words(MONTANT_PEC,'F',1) as net_pec from MIANDRALITINA.BILLING1 bill where NUM_FACT='".$num_facture."'";
+        $sql="Select bill.*,
+        (SELECT RC FROM MIANDRALITINA.CLIENT WHERE CODE_CLIENT=bill.CODE_CLI) as RC,
+        (SELECT STAT   FROM MIANDRALITINA.CLIENT WHERE CODE_CLIENT=bill.CODE_CLI) as STAT,
+        (SELECT CIF   FROM MIANDRALITINA.CLIENT WHERE CODE_CLIENT=bill.CODE_CLI) as CIF,
+        (SELECT NIF   FROM MIANDRALITINA.CLIENT WHERE CODE_CLIENT=bill.CODE_CLI) as NIF,
+        MONTANT_NET as net_mtnet,MONTANT_PEC as net_pec from MIANDRALITINA.BILLING1 bill where NUM_FACT='".$num_facture."'";
         $req=DB::select($sql); 
         foreach($req as $row){
             $data1=$row;
@@ -352,7 +407,7 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr,REGLEMENT_ID as regl_id ,NUM_FACT,miandralitina.Number_To_Words(MONTANT,'F',1) as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
+        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr,REGLEMENT_ID as regl_id ,NUM_FACT,MONTANT as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
         TYPE_RGLMT FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT='".$num_facture."' and REGLEMENT_ID<>'0' order by DATE_REGLEMENT desc ";
         $req=DB::select($sql); 
         
@@ -374,7 +429,7 @@ class Facture extends Controller
 
         $montantreglement = $req->input("montantreglement");
         $montantreglement = str_replace(" ", "", $montantreglement);
-        $montantreglement = round($montantreglement, 0);
+        $montantreglement = round($montantreglement, 2);
 
         $rib = $req->input("rib");
         $date_reglmnt = $req->input("date_reglmnt");
@@ -442,15 +497,15 @@ class Facture extends Controller
 
         $montant_net = $req->input("montant_net");
         $montant_net = str_replace(" ", "", $montant_net);
-        $montant_net = round($montant_net, 0);
+        $montant_net = round($montant_net, 2);
 
         $montant_patient = $req->input("montant_patient");
         $montant_patient = str_replace(" ", "", $montant_patient);
-        $montant_patient = round($montant_patient, 0);
+        $montant_patient = round($montant_patient, 2);
 
         $montant_pech = $req->input("montant_pech");
         $montant_pech = str_replace(" ", "", $montant_pech);
-        $montant_pech = round($montant_pech, 0);
+        $montant_pech = round($montant_pech, 2);
 
         $sqlmdpecremise="UPDATE MIANDRALITINA.FACTURE SET PEC=".$pec." , REMISE='".$remise."' , MONTANT_NET='".$montant_net."', MONTANT_PATIENT='".$montant_patient."', MONTANT_PEC='".$montant_pech."'WHERE NUM_FACT='".$num_facture."'";
         try {

@@ -245,3 +245,6 @@ Route::put("modifPecRemiseFacture","App\Http\Controllers\Facture@modifPecRemiseF
 
 // Modifier retour facture non regle
 Route::put("retourFactNonRegleEnNonPaye","App\Http\Controllers\Facture@retourFactNonRegleEnNonPaye");
+
+//Recherche Facture non regler
+Route::post("getRechercheEffectFacture","App\Http\Controllers\Facture@getRechercheEffectFacture");
