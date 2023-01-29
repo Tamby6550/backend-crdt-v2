@@ -24,7 +24,13 @@ class Facture extends Controller
 
         $sql2="SELECT  
         (select  PEC from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as pec,
-        (select  REMISE from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as remise
+        (select  REMISE from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as remise,
+
+        (select  CODE_PRESC from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as code_presc,
+        (select  CODE_CLIENT from MIANDRALITINA.Facture where NUM_FACT=ex.NUM_FACT) as code_client,
+        (select  cli.NOM from MIANDRALITINA.Facture fac,MIANDRALITINA.CLIENT cli where cli.CODE_CLIENT=fac.CODE_CLIENT and fac.NUM_FACT=ex.NUM_FACT) as nom_client,
+        (select  presc.NOM from MIANDRALITINA.Facture fac,CRDTPAT.PRESCRIPTEUR presc where presc.CODE_PRESC=fac.CODE_PRESC and fac.NUM_FACT=ex.NUM_FACT) as nom_presc
+
         FROM MIANDRALITINA.EXAMEN_DETAILS ex 
         WHERE NUM_ARRIV='".$num_arriv."' AND DATE_ARRIV=TO_DATE('".$date_arriv."','dd-mm-yyyy')";
         $requett2=DB::select($sql2);
@@ -297,7 +303,7 @@ class Facture extends Controller
         FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='1' AND
         R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
-       AND trunc(R.DATE_ARRIV)>=trunc(sysdate-3) 
+        AND (trunc(RRF.DATE_FACTURE)>=trunc(sysdate-5) or (SELECT count(*)  FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT=RRF.NUM_FACT and REGLEMENT_ID<>'0')=0)
 		ORDER BY  RRF.NUM_FACT DESC";
         $req=DB::select($sql); 
         
@@ -364,7 +370,7 @@ class Facture extends Controller
 		R.LAST_UPDATE as LAST_UPDATE
 		FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
 		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='2' AND
-        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV  
+        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV AND trunc(RRF.DATE_FACTURE)>=trunc(sysdate-5) 
 		ORDER BY  RRF.NUM_FACT DESC";
         $req=DB::select($sql); 
         
@@ -407,8 +413,12 @@ class Facture extends Controller
     {    
         $data1=array();
         $num_facture= str_replace("-", "/", $num_facture);
-        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr,REGLEMENT_ID as regl_id ,NUM_FACT,MONTANT as net,MONTANT,MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RIB,' ') RIB, to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
-        TYPE_RGLMT FROM MIANDRALITINA.REGLEMENT_DETAILS WHERE NUM_FACT='".$num_facture."' and REGLEMENT_ID<>'0' order by DATE_REGLEMENT desc ";
+        $sql="SELECT to_char(sysdate,'DD/MM/YYYY') as ajr,RGL.REGLEMENT_ID as regl_id ,RGL.NUM_FACT,RGL.MONTANT as net,RGL.MONTANT,
+        MIANDRALITINA.VIEW_REGLEMENT(REGLEMENT_ID) as REGLEMENT,nvl(RGL.RIB,' ') RIB,
+        to_char(RGL.DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLEMENT ,
+        (SELECT distinct bill.RESTE_PATIENT   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RGL.NUM_FACT ) as reste_patient,
+        (SELECT distinct bill.RESTE_PEC   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RGL.NUM_FACT ) as reste_client,
+        TYPE_RGLMT FROM MIANDRALITINA.REGLEMENT_DETAILS RGL WHERE NUM_FACT='".$num_facture."' and REGLEMENT_ID<>'0' order by DATE_REGLEMENT desc  ";
         $req=DB::select($sql); 
         
         $resultat=[
@@ -493,6 +503,8 @@ class Facture extends Controller
         $num_facture = $req->input("num_facture");
         $pec = $req->input("pec");
         $remise = $req->input("remise");
+        $code_presc = $req->input("code_presc");
+        $code_cli = $req->input("code_cli");
 
 
         $montant_net = $req->input("montant_net");
@@ -507,7 +519,9 @@ class Facture extends Controller
         $montant_pech = str_replace(" ", "", $montant_pech);
         $montant_pech = round($montant_pech, 2);
 
-        $sqlmdpecremise="UPDATE MIANDRALITINA.FACTURE SET PEC=".$pec." , REMISE='".$remise."' , MONTANT_NET='".$montant_net."', MONTANT_PATIENT='".$montant_patient."', MONTANT_PEC='".$montant_pech."'WHERE NUM_FACT='".$num_facture."'";
+        $sqlmdpecremise="UPDATE MIANDRALITINA.FACTURE SET CODE_PRESC='".$code_presc."',CODE_CLIENT='".$code_cli."', 
+        PEC=".$pec." , REMISE='".$remise."' , MONTANT_NET='".$montant_net."', MONTANT_PATIENT='".$montant_patient."',
+        MONTANT_PEC='".$montant_pech."'WHERE NUM_FACT='".$num_facture."'";
         try {
 
         //Mis a jour Reglement
