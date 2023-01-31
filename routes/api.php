@@ -248,3 +248,28 @@ Route::put("retourFactNonRegleEnNonPaye","App\Http\Controllers\Facture@retourFac
 
 //Recherche Facture non regler
 Route::post("getRechercheEffectFacture","App\Http\Controllers\Facture@getRechercheEffectFacture");
+
+
+
+//----------------------------- Rapport ------------------------------//
+//Facture du jour
+Route::get("getMtFacturejour/{date_facture}","App\Http\Controllers\Rapport@getMtFacturejour");
+Route::get("getFactureJour/{starts}&{ends}&{date_facture}","App\Http\Controllers\Rapport@getFactureJour");
+
+//Recette du jour
+Route::get("getMtRecettejour/{date_facture}","App\Http\Controllers\Rapport@getMtRecettejour");
+Route::get("getRecetteJour/{starts}&{ends}&{date_facture}","App\Http\Controllers\Rapport@getRecetteJour");
+
+//Virement du jour
+Route::get("getMtVirementjour/{date_facture}","App\Http\Controllers\Rapport@getMtVirementjour");
+Route::get("getVirementJour/{starts}&{ends}&{date_facture}","App\Http\Controllers\Rapport@getVirementJour");
+
+//Stat examen
+Route::post("getStatExamen","App\Http\Controllers\Rapport@getStatExamen");
+
+//Stat Client 
+Route::post("getMtClientStat","App\Http\Controllers\Rapport@getMtClientStat");
+Route::post("getClientStat","App\Http\Controllers\Rapport@getClientStat");
+
+//Stat détaillés examen
+Route::post("getStatDetailleExamen","App\Http\Controllers\Rapport@getStatDetailleExamen");
