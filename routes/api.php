@@ -273,3 +273,17 @@ Route::post("getClientStat","App\Http\Controllers\Rapport@getClientStat");
 
 //Stat détaillés examen
 Route::post("getStatDetailleExamen","App\Http\Controllers\Rapport@getStatDetailleExamen");
+
+//Prescripteur stat
+Route::post("getMtStatPrescripteur","App\Http\Controllers\Rapport@getMtStatPrescripteur");
+Route::post("getStatPrescripteur","App\Http\Controllers\Rapport@getStatPrescripteur");
+
+//Stat Prescripteur
+Route::post("getStatCategorie","App\Http\Controllers\Rapport@getStatCategorie");
+
+//Stat Cumul chiffre d'affaire
+Route::post("getCumulChiffre","App\Http\Controllers\Rapport@getCumulChiffre");
+
+//Releve facture
+Route::post("getMtReleveFact","App\Http\Controllers\Rapport@getMtReleveFact");
+Route::post("getRelevefacture","App\Http\Controllers\Rapport@getRelevefacture");

@@ -305,4 +305,214 @@ class Rapport extends Controller
           ]; 
           return response()->json($resultat);
       }
+
+    // -------------------------------------------Statistique Prescripteur---------------------------------------//
+    public function getMtStatPrescripteur(Request $req)
+    {
+        $date_deb=$req->input("date_deb");
+        $date_fin=$req->input("date_fin");
+        $code_presc=$req->input("code_presc");
+
+        $sql1="SELECT sum(QUANTITE) as QUANTITE,trim(to_char(sum(QUANTITE*MONTANT),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT
+        FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B  WHERE A.NUM_FACT=B.NUM_FACT and TYPE<>'PRODUIT' and CODE_PRESC='".$code_presc."' 
+        and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy')";
+        $req1=DB::select($sql1); 
+
+        $data1=array();
+        foreach($req1 as $row){
+            $data1=$row;
+        }
+
+        $quantite=$data1->quantite;
+        $montant=$data1->montant;
+
+        $sql="SELECT min(ID) as starts,max(ID) as ends,count(id) as counts FROM(SELECT ROWNUM as ID,NUM_FACT,LIB_EXAMEN,QUANTITE,PU,MONTANT,DATY FROM 
+        ( SELECT A.NUM_FACT as NUM_FACT, LIB_EXAMEN, QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY 
+        FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B WHERE A.NUM_FACT=B.NUM_FACT and TYPE<>'PRODUIT' and CODE_PRESC='".$code_presc."' 
+        and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') ORDER BY DATE_EXAMEN))";
+        $req=DB::select($sql); 
+
+        $data2=array();
+        foreach($req as $row){
+            $data2=$row;
+        }
+
+        $starts=$data2->starts;
+        $ends=$data2->ends;
+        $counts=$data2->counts;
+        
+        $resultat=[
+            'quantite'=>$quantite,
+            'montant'=>$montant,
+            'starts'=>$starts,
+            'ends'=>$ends,
+            'counts'=>$counts
+        ]; 
+        return response()->json($resultat);
+    }
+    public function getStatPrescripteur(Request $req)
+    {
+        $date_deb=$req->input("date_deb");
+        $date_fin=$req->input("date_fin");
+        $starts=$req->input("starts");
+        $ends=$req->input("ends");
+        $code_presc=$req->input("code_presc");
+
+        $sql1="SELECT ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,
+        trim(to_char(PU,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as PU,
+        trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT,
+        DATY FROM(SELECT ROWNUM as ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,PU,MONTANT,DATY FROM 
+        (SELECT A.NUM_FACT as NUM_FACT, LIB_EXAMEN,PATIENT,QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY
+        FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B WHERE A.NUM_FACT=B.NUM_FACT and TYPE<>'PRODUIT' 
+        and CODE_PRESC='".$code_presc."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') 
+        ORDER BY DATE_EXAMEN)) where ID>='".$starts."' and ID<='".$ends."'";
+        $req1=DB::select($sql1); 
+
+        return response()->json(['Data'=>$req1]);
+    }
+    
+    
+
+     // -------------------------------------------Statistique Catégorie---------------------------------------//
+     public function getStatCategorie(Request $req)
+     {
+        $date_deb=$req->input("date_deb");
+        $date_fin=$req->input("date_fin");
+
+        $sql1="SELECT sum(NOMBRE) NOMBRE,sum(MONTANT) as TOTAL,
+        trim(to_char(sum(MONTANT),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT 
+        FROM ( SELECT TYPE_CLIENT ,count(*) as NOMBRE ,sum(MONTANT_NET) as MONTANT FROM MIANDRALITINA.EXAMEN_STAT WHERE REJET<>'1' 
+        and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') GROUP BY TYPE_CLIENT)";
+        $req1=DB::select($sql1); 
+
+        $data1=array();
+        foreach($req1 as $row){
+            $data1=$row;
+        }
+
+        $nombre=$data1->nombre;
+        $total=$data1->total;
+        $montant=$data1->montant;
+
+        $sql="SELECT TYPE_CLIENT ,sum(MONTANT_NET) as MONT,count(*) as NOMBRE,
+        trim(to_char(sum(MONTANT_NET),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT 
+        FROM MIANDRALITINA.EXAMEN_STAT WHERE REJET<>'1' and 
+        trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') GROUP BY TYPE_CLIENT";
+        $req=DB::select($sql); 
+
+        $resultat=[
+            'nombre'=>$nombre,
+            'total'=>$total,
+            'montant'=>$montant,
+            'data'=>$req,
+        ]; 
+        return response()->json($resultat);
+     }
+
+     // -------------------------------------------Statistique Cumul chiffre d'affaire---------------------------------------//
+     public function getCumulChiffre(Request $req)
+     {
+        $date_deb=$req->input("date_deb");
+        $date_fin=$req->input("date_fin");
+
+        $sql1="SELECT sum(NOMBRE) NOMBRE,sum(MONTANT) as TOTAL,trim(to_char(sum(MONTANT),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT 
+        FROM ( SELECT TYPE ,count(*) as NOMBRE ,sum(MONTANT_NET) as MONTANT 
+        FROM MIANDRALITINA.EXAMEN_STAT WHERE REJET<>'1'  and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') GROUP BY TYPE)";
+        $req1=DB::select($sql1); 
+
+        $data1=array();
+        foreach($req1 as $row){
+            $data1=$row;
+        }
+
+        $nombre=$data1->nombre;
+        $total=$data1->total;
+        $montant=$data1->montant;
+
+        $sql="SELECT TYPE ,sum(MONTANT_NET) as MONT,count(*) as NOMBRE,
+        trim(to_char(sum(MONTANT_NET),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT 
+        FROM MIANDRALITINA.EXAMEN_STAT WHERE REJET<>'1'  
+        and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') GROUP BY TYPE";
+        $req=DB::select($sql); 
+
+        $resultat=[
+            'nombre'=>$nombre,
+            'total'=>$total,
+            'montant'=>$montant,
+            'data'=>$req,
+        ]; 
+        return response()->json($resultat);
+     }
+
+
+
+    // -------------------------------------------Releve facture---------------------------------------//
+     public function getMtReleveFact(Request $req)
+     {
+         $date_deb=$req->input("date_deb");
+         $date_fin=$req->input("date_fin");
+         $code_client=$req->input("code_client");
+ 
+         $sql1="SELECT trim(to_char(sum(MONTANT_PEC),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. '''))  as montant_pec,
+         trim(to_char(sum(MONTANT_PEC_REGLE),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as montant_pec_regle,
+         trim(to_char(sum(RESTE_PEC),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as reste_pec_regle 
+         FROM MIANDRALITINA.BILLING1 WHERE TYPE_FACTURE<>'Oui' and CODE_CLI='".$code_client."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy')";
+         $req1=DB::select($sql1); 
+ 
+         $data1=array();
+         foreach($req1 as $row){
+             $data1=$row;
+         }
+ 
+         $montant_pec=$data1->montant_pec;
+         $montant_pec_regle=$data1->montant_pec_regle;
+         $reste_pec_regle=$data1->reste_pec_regle;
+ 
+         $sql="SELECT min(ID) as starts,max(ID) as ends,count(id) as counts 
+         FROM (SELECT  ROWNUM AS ID,NUM_FACT,DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT FROM MIANDRALITINA.BILLING1 
+         WHERE TYPE_FACTURE<>'Oui' and CODE_CLI='".$code_client."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') 
+         ORDER BY trunc(DATE_EXAMEN) ASC)";
+         $req=DB::select($sql); 
+ 
+         $data2=array();
+         foreach($req as $row){
+             $data2=$row;
+         }
+ 
+         $starts=$data2->starts;
+         $ends=$data2->ends;
+         $counts=$data2->counts;
+         
+         $resultat=[
+             'montant_pec'=>$montant_pec,
+             'montant_pec_regle'=>$montant_pec_regle,
+             'reste_pec_regle'=>$reste_pec_regle,
+             'starts'=>$starts,
+             'ends'=>$ends,
+             'counts'=>$counts
+         ]; 
+         return response()->json($resultat);
+     }
+     public function getRelevefacture(Request $req)
+     {
+        $date_deb=$req->input("date_deb");
+        $date_fin=$req->input("date_fin");
+        $starts=$req->input("starts");
+        $ends=$req->input("ends");
+        $code_client=$req->input("code_client");
+     
+        $sql1="SELECT NUM_FACT,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,
+        trim(to_char(MONTANT_PEC,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as pec,
+        trim(to_char(MONTANT_PEC_REGLE,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as pec_regle,
+        trim(to_char(RESTE_PEC,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as reste_pec,PATIENT 
+        FROM (SELECT ROWNUM AS ID,NUM_FACT, DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
+        FROM(SELECT  NUM_FACT,trunc(DATE_EXAMEN) as DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
+        FROM MIANDRALITINA.BILLING1 WHERE TYPE_FACTURE<>'Oui' 
+        and CODE_CLI='".$code_client."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') 
+        and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') ORDER BY DATE_EXAMEN,substr(NUM_FACT,7,4) ASC)) where ID>='".$starts."' and ID<='".$ends."'";
+        $req1=DB::select($sql1); 
+    
+        return response()->json(['Data'=>$req1]);
+     }
+
 }
