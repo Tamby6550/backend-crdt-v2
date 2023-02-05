@@ -287,3 +287,6 @@ Route::post("getCumulChiffre","App\Http\Controllers\Rapport@getCumulChiffre");
 //Releve facture
 Route::post("getMtReleveFact","App\Http\Controllers\Rapport@getMtReleveFact");
 Route::post("getRelevefacture","App\Http\Controllers\Rapport@getRelevefacture");
+
+//Journal du jour
+Route::get("getJournalJour/{date_facture}","App\Http\Controllers\Rapport@getJournalJour");

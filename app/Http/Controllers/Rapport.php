@@ -37,14 +37,14 @@ class Rapport extends Controller
     }
     public function getFactureJour($starts,$ends,$date_facture)
     {    
-        $sql2="SELECT to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,NUM_FACT,substr(CLIENT,1,25) as CLIENT,substr(PATIENT,1,29) as PATIENT,
+        $sql2="SELECT NUM_ARRIV,to_char(DATE_ARRIV,'DD/MM/YYYY') as DATE_ARRIV,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,NUM_FACT,substr(CLIENT,1,25) as CLIENT,substr(PATIENT,1,29) as PATIENT,
         trim(to_char(MONTANT_NET,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT,substr(REGLEMNT,1,1) as REGLEMNT,
         trim(to_char(MONTANT_PATIENT_REGLE+MONTANT_PEC_REGLE,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT_REGL,
         substr(TYPE_FACTURE,1,1) as TYPE_FACTURE ,MIANDRALITINA.VIEW_ECHO(NUM_FACT) as ECHO,MIANDRALITINA.VIEW_MAMMO(NUM_FACT) as MAMO,
         MIANDRALITINA.VIEW_PANO(NUM_FACT) as PANNO,MIANDRALITINA.VIEW_ECG(NUM_FACT) as ECG,MIANDRALITINA.VIEW_AUTRES(NUM_FACT) as PRODUIT,
         MIANDRALITINA.VIEW_RADIO(NUM_FACT) as RADIO,MIANDRALITINA.VIEW_SCAN(NUM_FACT) as SCAN,OBSERVATION 
         FROM MIANDRALITINA.BILLING1 WHERE to_char(DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' 
-        and ( to_number(substr(NUM_FACT,7,4))>='".$starts."' and to_number(substr(NUM_FACT,7,4))<='".$ends."') ORDER BY NUM_FACT ASC";
+        and ( to_number(substr(NUM_FACT,7,4))>='".$starts."' and to_number(substr(NUM_FACT,7,4))<='".$ends."') ORDER BY NUM_ARRIV ASC";
         $req2=DB::select($sql2); 
 
         return response()->json(['Data'=>$req2]);
@@ -97,9 +97,13 @@ class Rapport extends Controller
         $counts=$data3->counts;
         $montant=$data3->montant;
 
+        if ($starts==''|| $starts==null) {
+           $starts='0';
+           $ends='0';
+        }
         $resultat=[
-            'montant_chq'=>trim($montant_esp),
-            'montant_esp'=>trim($montant_chq),
+            'montant_chq'=>trim($montant_chq),
+            'montant_esp'=>trim($montant_esp),
             'starts'=>trim($starts),
             'ends'=>trim($ends),
             'counts'=>trim($counts),
@@ -110,12 +114,14 @@ class Rapport extends Controller
     }
     public function getRecetteJour($starts,$ends,$date_facture)
     {    
-        $sql2="SELECT ID,DATE_REGLMT,NUM_FACT,PATIENT,CLIENT,REGLEMNT,trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT FROM 
+        $sql2="SELECT ID,DATE_REGLMT,NUM_FACT,PATIENT,CLIENT,REGLEMNT,NUM_ARRIV,DATE_ARRIV,trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT FROM 
         ( SELECT ROWNUM as ID,to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLMT,A.NUM_FACT as NUM_FACT,
-        PATIENT,MIANDRALITINA.VIEW_CLIENT(CODE_CLIENT) as CLIENT,MIANDRALITINA.VIEW_REGLEMENT(A.REGLEMENT_ID) as REGLEMNT,MONTANT 
-        FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B WHERE 
+        PATIENT,MIANDRALITINA.VIEW_CLIENT(CODE_CLIENT) as CLIENT,MIANDRALITINA.VIEW_REGLEMENT(A.REGLEMENT_ID) as REGLEMNT,
+        MIANDRALITINA.VIEW_NUM_ARRIV(A.NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(A.NUM_FACT) AS DATE_ARRIV,
+        MONTANT 
+        FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B  WHERE 
         A.NUM_FACT=B.NUM_FACT AND TYPE_FACTURE='0' AND A.REGLEMENT_ID in ('1','2') AND to_char(DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' ) 
-        WHERE ID>='".$starts."' and ID <='".$ends."' ORDER BY NUM_FACT ASC";
+        WHERE ID>='".$starts."' and ID <='".$ends."' ORDER BY NUM_ARRIV ASC";
         $req2=DB::select($sql2); 
 
         return response()->json(['Data'=>$req2]);
@@ -153,9 +159,12 @@ class Rapport extends Controller
     }
     public function getVirementJour($starts,$ends,$date_facture)
     {    
-        $sql2="SELECT ID,DATE_REGLMT,NUM_FACT,PATIENT,CLIENT,REGLEMNT,to_char(MONTANT,'999G999G999G999G999') as MONTANT FROM 
+        $sql2="SELECT ID,DATE_REGLMT,NUM_FACT,PATIENT,CLIENT,REGLEMNT,NUM_ARRIV,DATE_ARRIV,trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT FROM 
         ( SELECT ROWNUM as ID,to_char(DATE_REGLEMENT,'DD/MM/YYYY') as DATE_REGLMT,A.NUM_FACT as NUM_FACT,
-        PATIENT,MIANDRALITINA.VIEW_CLIENT(CODE_CLIENT) as CLIENT,MIANDRALITINA.VIEW_REGLEMENT(A.REGLEMENT_ID) as REGLEMNT,MONTANT FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B WHERE 
+        PATIENT,MIANDRALITINA.VIEW_CLIENT(CODE_CLIENT) as CLIENT,MIANDRALITINA.VIEW_REGLEMENT(A.REGLEMENT_ID) as REGLEMNT,
+        MIANDRALITINA.VIEW_NUM_ARRIV(A.NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(A.NUM_FACT) AS DATE_ARRIV,
+        MONTANT 
+        FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B WHERE 
         A.NUM_FACT=B.NUM_FACT AND TYPE_FACTURE='0' AND A.REGLEMENT_ID='3' AND to_char(DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' ) 
         WHERE ID>='".$starts."' and ID <='".$ends."' ORDER BY NUM_FACT ASC";
         $req2=DB::select($sql2); 
@@ -204,7 +213,7 @@ class Rapport extends Controller
     {
         $date_deb=$req->input("date_deb");
         $date_fin=$req->input("date_fin");
-        $code_client=$req->input("code_client");
+        $code_client=$req->input("code_cli");
 
         $sql1="SELECT sum(QUANTITE) as QUANTITE,trim(to_char(sum(QUANTITE*MONTANT),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT 
         FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B  
@@ -248,15 +257,17 @@ class Rapport extends Controller
     {    
         $date_deb=$req->input("date_deb");
         $date_fin=$req->input("date_fin");
-        $code_client=$req->input("code_client");
+        $code_client=$req->input("code_cli");
         $starts=$req->input("starts");
         $ends=$req->input("ends");
 
-        $sql2="SELECT ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,
+        $sql2="SELECT ID,NUM_ARRIV,DATE_ARRIV,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,
         trim(to_char(PU,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as PU,
         trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT,
-        DATY FROM(SELECT ROWNUM as ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,PU,MONTANT,DATY FROM 
-        (SELECT A.NUM_FACT as NUM_FACT, LIB_EXAMEN,PATIENT,QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY 
+        DATY FROM(SELECT ROWNUM as ID,MIANDRALITINA.VIEW_NUM_ARRIV(NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(NUM_FACT) AS DATE_ARRIV,
+        NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,PU,MONTANT,DATY FROM 
+        (SELECT MIANDRALITINA.VIEW_NUM_ARRIV(A.NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(A.NUM_FACT) AS DATE_ARRIV
+        ,A.NUM_FACT as NUM_FACT, LIB_EXAMEN,PATIENT,QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY 
         FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B WHERE A.NUM_FACT=B.NUM_FACT and REJET<>'1'
         and TYPE<>'AUTRES' and CODE_CLIENT='".$code_client."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy')
         ORDER BY DATE_EXAMEN)) where ID>='".$starts."' and ID<='".$ends."'";
@@ -346,7 +357,8 @@ class Rapport extends Controller
             'montant'=>$montant,
             'starts'=>$starts,
             'ends'=>$ends,
-            'counts'=>$counts
+            'counts'=>$counts,
+            'sql'=>$sql,
         ]; 
         return response()->json($resultat);
     }
@@ -358,11 +370,13 @@ class Rapport extends Controller
         $ends=$req->input("ends");
         $code_presc=$req->input("code_presc");
 
-        $sql1="SELECT ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,
+        $sql1="SELECT ID,NUM_ARRIV,DATE_ARRIV,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,
         trim(to_char(PU,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as PU,
         trim(to_char(MONTANT,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as MONTANT,
-        DATY FROM(SELECT ROWNUM as ID,NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,PU,MONTANT,DATY FROM 
-        (SELECT A.NUM_FACT as NUM_FACT, LIB_EXAMEN,PATIENT,QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY
+        DATY FROM(SELECT ROWNUM as ID,MIANDRALITINA.VIEW_NUM_ARRIV(NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(NUM_FACT) AS DATE_ARRIV,
+        NUM_FACT,LIB_EXAMEN,PATIENT,QUANTITE,PU,MONTANT,DATY FROM 
+        (SELECT MIANDRALITINA.VIEW_NUM_ARRIV(A.NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(A.NUM_FACT) AS DATE_ARRIV
+        ,A.NUM_FACT as NUM_FACT, LIB_EXAMEN,PATIENT,QUANTITE, MONTANT as PU, QUANTITE*MONTANT as MONTANT ,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATY
         FROM MIANDRALITINA.EXAMEN_DETAILS A,MIANDRALITINA.FACTURE B WHERE A.NUM_FACT=B.NUM_FACT and TYPE<>'PRODUIT' 
         and CODE_PRESC='".$code_presc."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') 
         ORDER BY DATE_EXAMEN)) where ID>='".$starts."' and ID<='".$ends."'";
@@ -451,7 +465,7 @@ class Rapport extends Controller
      {
          $date_deb=$req->input("date_deb");
          $date_fin=$req->input("date_fin");
-         $code_client=$req->input("code_client");
+         $code_client=$req->input("code_cli");
  
          $sql1="SELECT trim(to_char(sum(MONTANT_PEC),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. '''))  as montant_pec,
          trim(to_char(sum(MONTANT_PEC_REGLE),'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as montant_pec_regle,
@@ -499,20 +513,49 @@ class Rapport extends Controller
         $date_fin=$req->input("date_fin");
         $starts=$req->input("starts");
         $ends=$req->input("ends");
-        $code_client=$req->input("code_client");
+        $code_client=$req->input("code_cli");
      
-        $sql1="SELECT NUM_FACT,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,
+        $sql1="SELECT NUM_ARRIV,DATE_ARRIV,NUM_FACT,to_char(DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,
         trim(to_char(MONTANT_PEC,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as pec,
         trim(to_char(MONTANT_PEC_REGLE,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as pec_regle,
         trim(to_char(RESTE_PEC,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) as reste_pec,PATIENT 
-        FROM (SELECT ROWNUM AS ID,NUM_FACT, DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
-        FROM(SELECT  NUM_FACT,trunc(DATE_EXAMEN) as DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
+        FROM (SELECT ROWNUM AS ID,MIANDRALITINA.VIEW_NUM_ARRIV(NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(NUM_FACT) AS DATE_ARRIV,
+        NUM_FACT, DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
+        FROM(SELECT  MIANDRALITINA.VIEW_NUM_ARRIV(NUM_FACT) AS NUM_ARRIV,MIANDRALITINA.VIEW_DATE_ARRIV(NUM_FACT) AS DATE_ARRIV,
+        NUM_FACT,trunc(DATE_EXAMEN) as DATE_EXAMEN,MONTANT_PEC,MONTANT_PEC_REGLE,RESTE_PEC,PATIENT 
         FROM MIANDRALITINA.BILLING1 WHERE TYPE_FACTURE<>'Oui' 
         and CODE_CLI='".$code_client."' and trunc(DATE_EXAMEN)>=to_date('".$date_deb."','dd/mm/yyyy') 
-        and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') ORDER BY DATE_EXAMEN,substr(NUM_FACT,7,4) ASC)) where ID>='".$starts."' and ID<='".$ends."'";
+        and trunc(DATE_EXAMEN)<=to_date('".$date_fin."','dd/mm/yyyy') ORDER BY DATE_ARRIV,NUM_ARRIV,DATE_EXAMEN,substr(NUM_FACT,7,4) ASC)) where ID>='".$starts."' and ID<='".$ends."'";
         $req1=DB::select($sql1); 
     
         return response()->json(['Data'=>$req1]);
      }
 
+
+     // -------------------------------------------Journal du jour ---------------------------------------//
+     public function getJournalJour($date_facture)
+    {    
+        $sql2="SELECT 
+        to_char(reg.date_arriv,'DD/MM/YYYY') as date_arriv,reg.Num_arriv as num_arriv,
+        (pat.nom|| ' '||pat.prenom) as nom, pat.type_patient ,pat.sexe as sexe,to_char(pat.datenaiss,'DD/MM/YYYY') as datenaiss,
+        CASE
+                WHEN reg.VERF_EXAM=0 THEN 'Examen non effectué'
+                WHEN reg.VERF_EXAM=1 THEN 'Examen non validé'
+                ELSE 'Examen effectué'
+        END STATUS_EXAM,
+        CASE
+                WHEN reg.VERF_FACT=0 THEN 'Non facturé'
+                WHEN reg.VERF_FACT=1 THEN 'Facture non regler'
+                ELSE 'Facture réglé'
+        END STATUS_FACT,
+        (SELECT distinct bill.MONTANT_PATIENT   FROM MIANDRALITINA.BILLING1 bill WHERE bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as totalpat,
+        (SELECT distinct bill.MONTANT_PEC   FROM MIANDRALITINA.BILLING1 bill WHERE  bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as totalpec,
+        (SELECT distinct bill.MONTANT_PATIENT_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE  bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as rpatient,
+        (SELECT distinct bill.MONTANT_PEC_REGLE   FROM MIANDRALITINA.BILLING1 bill WHERE  bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as rclient
+        FROM crdtpat.registre reg,CRDTPAT.Patient pat
+        WHERE  reg.ID_PATIENT=pat.id_patient and reg.DATE_ARRIV=to_date('".$date_facture."','dd-mm-yyyy') order by reg.NUM_ARRIV ASC";
+        $req2=DB::select($sql2); 
+
+        return response()->json(['Data'=>$req2]);
+    }
 }
