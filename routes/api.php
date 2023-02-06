@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //-----------------------------Login------------------------------//
 //Login sur crdt
 Route::post("login","App\Http\Controllers\LoginCrdt@login");
+Route::post("changemdp","App\Http\Controllers\LoginCrdt@changemdp");
 // //
 // Route::post("activiteCompte","App\Http\Controllers\LoginCrdt@activiteCompteListe");
 // //
@@ -290,3 +291,6 @@ Route::post("getRelevefacture","App\Http\Controllers\Rapport@getRelevefacture");
 
 //Journal du jour
 Route::get("getJournalJour/{date_facture}","App\Http\Controllers\Rapport@getJournalJour");
+
+//Examen du jour
+Route::get("getExamenJour/{date_facture}","App\Http\Controllers\Rapport@getExamenJour");

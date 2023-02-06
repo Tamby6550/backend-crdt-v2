@@ -558,4 +558,28 @@ class Rapport extends Controller
 
         return response()->json(['Data'=>$req2]);
     }
+
+
+     // -------------------------------------------Examen du jour ---------------------------------------//
+     public function getExamenJour($date_facture)
+    {    
+        $sql2="SELECT distinct pat.nom ,reg.NUM_ARRIV,to_char(reg.DATE_ARRIV,'DD/MM/YYYY') as DATE_ARRIV,
+        to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,bill.REGLEMNT,bill.NUM_FACT,
+        trim(to_char(bill.MONTANT_PATIENT_REGLE+bill.MONTANT_PEC_REGLE,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT_REGL
+        from crdtpat.registre reg,crdtpat.patient pat,miandralitina.examen_details ex,miandralitina.BILLING1 bill
+        where  reg.ID_PATIENT=pat.ID_PATIENT 
+        and bill.NUM_ARRIV=reg.NUM_ARRIV and bill.DATE_ARRIV=reg.DATE_ARRIV 
+        and ex.NUM_ARRIV=reg.NUM_ARRIV and ex.DATE_ARRIV=reg.DATE_ARRIV
+        and reg.DATE_ARRIV=to_date('".$date_facture."','DD-MM-YYYY') order by reg.NUM_ARRIV ASC";
+        $req2=DB::select($sql2); 
+
+        for ($i=0; $i < count($req2); $i++) { 
+            $sql3="SELECT ex.LIB_EXAMEN,ex.CODE_TARIF from miandralitina.examen_details ex where ex.NUM_ARRIV='".$req2[$i]->num_arriv."'
+            and ex.DATE_ARRIV=to_date('".$req2[$i]->date_arriv."','DD/MM/YYYY')";
+            $req3=DB::select($sql3); 
+            $req2[$i]->examen=$req3;
+        }
+
+        return response()->json(['Data'=>$req2]);
+    }
 }
