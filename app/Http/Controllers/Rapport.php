@@ -561,16 +561,94 @@ class Rapport extends Controller
 
 
      // -------------------------------------------Examen du jour ---------------------------------------//
+     public function getMtExamenJour($date_facture)
+     {
+        //Fanotanina , ze reglement androan ve no affichena @le examen du jour sa ze examen tandroany,
+        //de raha ze regelment androan de iza no raisina  type reglement(esp sa chq) raha samy nanao anio aby androany
+
+         //Espèces , raha atao mitovy @recette du jour
+         $sql1ESP="SELECT sum(A.MONTANT) as montant_esp
+         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B 
+         WHERE A.NUM_FACT=B.NUM_FACT 
+         AND TYPE_FACTURE='0' AND A.REGLEMENT_ID=1 AND to_char(A.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' 
+         --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' )
+         ";
+
+        //Raha ze examen androan ihny no jerena, wher date_exam
+        //  $sql1ESP="SELECT sum(distinct A.MONTANT) as montant_esp
+        //  FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B , MIANDRALITINA.EXAMEN_DETAILS ex
+        //  WHERE A.NUM_FACT=B.NUM_FACT AND ex.NUM_FACT=A.NUM_FACT
+        //  AND TYPE_FACTURE='0' AND A.REGLEMENT_ID=1 AND to_char(A.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' 
+        //  (and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' )
+        //  ";
+ 
+         //Chèques
+         $sql1CH="SELECT sum(A.MONTANT) as montant_chq
+         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B 
+         WHERE A.NUM_FACT=B.NUM_FACT 
+         AND TYPE_FACTURE='0' AND A.REGLEMENT_ID=2 AND to_char(A.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' 
+         --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' )
+         ";
+ 
+         //Montant
+         $sql1Mt="SELECT sum(count(distinct ex.NUM_FACT)) as count
+         FROM MIANDRALITINA.EXAMEN_DETAILS ex ,MIANDRALITINA.REGLEMENT_DETAILS regl where  ex.NUM_FACT=regl.NUM_FACT AND
+         to_char(regl.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."') 
+         GROUP BY ex.LIB_EXAMEN";
+ 
+         $req1=DB::select($sql1ESP); 
+         $req2=DB::select($sql1CH); 
+         $req3=DB::select($sql1Mt); 
+ 
+         $data1=array();
+         $data2=array();
+         $data3=array();
+         foreach($req1 as $row){
+             $data1=$row;
+         }
+         foreach($req2 as $row){
+             $data2=$row;
+         }
+         foreach($req3 as $row){
+             $data3=$row;
+         }
+ 
+         $montant_esp=$data1->montant_esp;
+         $montant_chq=$data2->montant_chq;
+
+         $count=$data3->count;
+ 
+        
+         $resultat=[
+             'montant_chq'=>trim($montant_chq),
+             'montant_esp'=>trim($montant_esp),
+             'count'=>trim($count)
+         ]; 
+ 
+         return response()->json($resultat);
+     }
      public function getExamenJour($date_facture)
     {    
-        $sql2="SELECT distinct pat.nom ,reg.NUM_ARRIV,to_char(reg.DATE_ARRIV,'DD/MM/YYYY') as DATE_ARRIV,
-        to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,bill.REGLEMNT,bill.NUM_FACT,
-        trim(to_char(bill.MONTANT_PATIENT_REGLE+bill.MONTANT_PEC_REGLE,'999G999G999G999G999','NLS_NUMERIC_CHARACTERS=''. ''')) MONTANT_REGL
-        from crdtpat.registre reg,crdtpat.patient pat,miandralitina.examen_details ex,miandralitina.BILLING1 bill
-        where  reg.ID_PATIENT=pat.ID_PATIENT 
-        and bill.NUM_ARRIV=reg.NUM_ARRIV and bill.DATE_ARRIV=reg.DATE_ARRIV 
-        and ex.NUM_ARRIV=reg.NUM_ARRIV and ex.DATE_ARRIV=reg.DATE_ARRIV
-        and reg.DATE_ARRIV=to_date('".$date_facture."','DD-MM-YYYY') order by reg.NUM_ARRIV ASC";
+        //Fanotanina , ze reglement androan ve no affichena @le examen du jour sa ze examen tandroany,
+        //de raha ze regelment androan de iza no raisina  type reglement(esp sa chq) raha samy nanao anio aby androany
+
+        $sql2="SELECT 
+        distinct ex.NUM_FACT, to_char(ex.DATE_ARRIV,'DD/MM/YYYY') as DATE_ARRIV,ex.NUM_ARRIV ,  to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') as DATE_EXAMEN,
+        (pat.NOM ||' '||pat.PRENOM) as NOM,
+        --Manao select view_reglement zay reglement ny montant max t@niny andro iny,jerena ny reglment ny, mba hialana @le reglement 0 na montant 0
+        (SELECT MIANDRALITINA.VIEW_REGLEMENT(rg.REGLEMENT_ID) as REGLEMNT from MIANDRALITINA.REGLEMENT_DETAILS rg 
+        WHERE rg.NUM_FACT=regl.NUM_FACT and to_char(rg.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' AND rg.MONTANT=(select max(rg.MONTANT) 
+        FROM MIANDRALITINA.REGLEMENT_DETAILS rg where rg.NUM_FACT=regl.NUM_FACT and to_char(rg.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' )) 
+        as REGLEMENT,
+        --atao ny  somme montant t@date reglement iray
+        (select sum(rg.MONTANT)
+        from MIANDRALITINA.REGLEMENT_DETAILS rg where rg.NUM_FACT=regl.NUM_FACT and to_char(rg.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' ) as MONTANT_REGL
+
+        FROM MIANDRALITINA.EXAMEN_DETAILS ex ,MIANDRALITINA.REGLEMENT_DETAILS regl,MIANDRALITINA.FACTURE fac,CRDTPAT.REGISTRE reg,CRDTPAT.PATIENT pat
+        WHERE  ex.NUM_FACT=regl.NUM_FACT and ex.NUM_FACT=fac.NUM_FACT and  ex.NUM_ARRIV=reg.NUM_ARRIV and ex.DATE_ARRIV=reg.DATE_ARRIV
+        and reg.ID_PATIENT=pat.ID_PATIENT
+        and fac.TYPE_FACTURE='0' and to_char(regl.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."')
+        ";
         $req2=DB::select($sql2); 
 
         for ($i=0; $i < count($req2); $i++) { 

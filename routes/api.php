@@ -18,6 +18,9 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
+// Test api
+Route::get("getTestAPI","App\Http\Controllers\TestAPI@getTestAPI");
+
 
 //-----------------------------Login------------------------------//
 //Login sur crdt
@@ -293,4 +296,5 @@ Route::post("getRelevefacture","App\Http\Controllers\Rapport@getRelevefacture");
 Route::get("getJournalJour/{date_facture}","App\Http\Controllers\Rapport@getJournalJour");
 
 //Examen du jour
+Route::get("getMtExamenJour/{date_facture}","App\Http\Controllers\Rapport@getMtExamenJour");
 Route::get("getExamenJour/{date_facture}","App\Http\Controllers\Rapport@getExamenJour");
