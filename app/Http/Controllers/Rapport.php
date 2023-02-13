@@ -539,14 +539,14 @@ class Rapport extends Controller
         to_char(reg.date_arriv,'DD/MM/YYYY') as date_arriv,reg.Num_arriv as num_arriv,
         (pat.nom|| ' '||pat.prenom) as nom, pat.type_patient ,pat.sexe as sexe,to_char(pat.datenaiss,'DD/MM/YYYY') as datenaiss,
         CASE
-                WHEN reg.VERF_EXAM=0 THEN 'Examen non effectué'
-                WHEN reg.VERF_EXAM=1 THEN 'Examen non validé'
-                ELSE 'Examen effectué'
+                WHEN reg.VERF_EXAM=0 THEN 'Non effectué'
+                WHEN reg.VERF_EXAM=1 THEN 'Non valider'
+                ELSE 'Effectué'
         END STATUS_EXAM,
         CASE
                 WHEN reg.VERF_FACT=0 THEN 'Non facturé'
-                WHEN reg.VERF_FACT=1 THEN 'Facture non regler'
-                ELSE 'Facture réglé'
+                WHEN reg.VERF_FACT=1 THEN 'Non regler'
+                ELSE 'Réglé'
         END STATUS_FACT,
         (SELECT distinct bill.MONTANT_PATIENT   FROM MIANDRALITINA.BILLING1 bill WHERE bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as totalpat,
         (SELECT distinct bill.MONTANT_PEC   FROM MIANDRALITINA.BILLING1 bill WHERE  bill.DATE_ARRIV=reg.DATE_ARRIV AND bill.NUM_ARRIV=reg.NUM_ARRIV ) as totalpec,
@@ -567,11 +567,11 @@ class Rapport extends Controller
         //de raha ze regelment androan de iza no raisina  type reglement(esp sa chq) raha samy nanao anio aby androany
 
          //Espèces , raha atao mitovy @recette du jour
-         $sql1ESP="SELECT sum(A.MONTANT) as montant_esp
-         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B 
-         WHERE A.NUM_FACT=B.NUM_FACT 
+         $sql1ESP="SELECT sum(distinct A.MONTANT) as montant_esp
+         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B , MIANDRALITINA.EXAMEN_DETAILS ex
+         WHERE A.NUM_FACT=B.NUM_FACT AND ex.NUM_FACT=A.NUM_FACT
          AND TYPE_FACTURE='0' AND A.REGLEMENT_ID=1 AND to_char(A.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' 
-         --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' )
+         and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' 
          ";
 
         //Raha ze examen androan ihny no jerena, wher date_exam
@@ -583,11 +583,11 @@ class Rapport extends Controller
         //  ";
  
          //Chèques
-         $sql1CH="SELECT sum(A.MONTANT) as montant_chq
-         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B 
-         WHERE A.NUM_FACT=B.NUM_FACT 
+         $sql1CH="SELECT sum(distinct A.MONTANT) as montant_chq
+         FROM MIANDRALITINA.REGLEMENT_DETAILS A,MIANDRALITINA.FACTURE B , MIANDRALITINA.EXAMEN_DETAILS ex
+         WHERE A.NUM_FACT=B.NUM_FACT AND ex.NUM_FACT=A.NUM_FACT
          AND TYPE_FACTURE='0' AND A.REGLEMENT_ID=2 AND to_char(A.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' 
-         --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' )
+         and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."' 
          ";
  
          //Montant
@@ -646,8 +646,8 @@ class Rapport extends Controller
 
         FROM MIANDRALITINA.EXAMEN_DETAILS ex ,MIANDRALITINA.REGLEMENT_DETAILS regl,MIANDRALITINA.FACTURE fac,CRDTPAT.REGISTRE reg,CRDTPAT.PATIENT pat
         WHERE  ex.NUM_FACT=regl.NUM_FACT and ex.NUM_FACT=fac.NUM_FACT and  ex.NUM_ARRIV=reg.NUM_ARRIV and ex.DATE_ARRIV=reg.DATE_ARRIV
-        and reg.ID_PATIENT=pat.ID_PATIENT
-        and fac.TYPE_FACTURE='0' and to_char(regl.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' --(and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."')
+        and reg.ID_PATIENT=pat.ID_PATIENT 
+        and fac.TYPE_FACTURE='0' and to_char(regl.DATE_REGLEMENT,'DD-MM-YYYY')='".$date_facture."' and to_char(ex.DATE_EXAMEN,'DD-MM-YYYY')='".$date_facture."'
         ";
         $req2=DB::select($sql2); 
 

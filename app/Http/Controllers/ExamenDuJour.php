@@ -68,9 +68,11 @@ class ExamenDuJour extends Controller
 
     public function getExamenEff()//Vef_examen dans registre est 1
     {    
-        $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
-        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='1' order by LAST_UPDATE DESC";
+        $sql="SELECT to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(ls.DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(ls.DATE_ARR,'MM/DD/YYYY') as date_arrive,
+        ls.NUMERO as numero,ls.ID_PATIENT as id_patient,ls.TYPE_PATIENT as type_pat,ls.VERF_EXAMEN as verf_exam, 
+        (select distinct  to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') from MIANDRALITINA.EXAMEN_DETAILS ex where ex.NUM_ARRIV=ls.NUMERO and ex.DATE_ARRIV=ls.DATE_ARR ) as date_examen,
+        ls.NOM as nom,to_char(ls.DATE_NAISS,'DD/MM/YYYY')  as date_naiss,ls.TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE ls
+        WHERE ls.VERF_EXAMEN='1' order by LAST_UPDATE DESC";
         $req=DB::select($sql); 
         
         return response()->json($req);
@@ -191,9 +193,11 @@ class ExamenDuJour extends Controller
     //Vef_examen dans registre est 2
     public function getExamenEffValide()//le 1 dernier jour qui effectue leur examen ou qui n'est pas facturé
     {    
-        $sql="SELECT VERF_FACT, to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
-        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE (trunc(DATE_ARR)>=trunc(sysdate-1) or VERF_FACT='0') AND VERF_EXAMEN='2' order by LAST_UPDATE,NUMERO DESC";
+        $sql="SELECT ls.VERF_FACT, to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(ls.DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(ls.DATE_ARR,'MM/DD/YYYY') as date_arrive,
+        ls.NUMERO as numero,ls.ID_PATIENT as id_patient,ls.TYPE_PATIENT as type_pat,ls.VERF_EXAMEN as verf_exam,
+        (select distinct  to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') from MIANDRALITINA.EXAMEN_DETAILS ex where ex.NUM_ARRIV=ls.NUMERO and ex.DATE_ARRIV=ls.DATE_ARR ) as date_examen,
+        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE ls
+        WHERE (trunc(DATE_ARR)>=trunc(sysdate-1) or VERF_FACT='0') AND VERF_EXAMEN='2' order by ls.LAST_UPDATE DESC";
         $req=DB::select($sql); 
         
         return response()->json($req);
@@ -207,16 +211,18 @@ class ExamenDuJour extends Controller
         $date_naiss = $req->input("date_naiss");
         $nom = $req->input("nom");
 
-        $sql="SELECT VERF_FACT, to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(DATE_ARR,'MM/DD/YYYY') as date_arrive,NUMERO as numero,ID_PATIENT as id_patient,TYPE_PATIENT as type_pat,VERF_EXAMEN as verf_exam,
-        NOM as nom,to_char(DATE_NAISS,'DD/MM/YYYY')  as date_naiss,TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE 
-        WHERE VERF_EXAMEN='2' ";
+        $sql="SELECT  ls.VERF_FACT, to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(ls.DATE_ARR,'DD/MM/YYYY') as date_arr,to_char(ls.DATE_ARR,'MM/DD/YYYY') as date_arrive,
+        ls.NUMERO as numero,ls.ID_PATIENT as id_patient,ls.TYPE_PATIENT as type_pat,ls.VERF_EXAMEN as verf_exam,
+        (select distinct  to_char(ex.DATE_EXAMEN,'DD/MM/YYYY') from MIANDRALITINA.EXAMEN_DETAILS ex where ex.NUM_ARRIV=ls.NUMERO and ex.DATE_ARRIV=ls.DATE_ARR ) as date_examen,
+        ls.NOM as nom,to_char(ls.DATE_NAISS,'DD/MM/YYYY')  as date_naiss,ls.TELEPHONE as telephone FROM CRDTPAT.LISTEREGISTRE  ls
+        WHERE ls.VERF_EXAMEN='2'   ";
         
-        if ($numero_arr!="")          {$sql=$sql." AND NUMERO='".$numero_arr."' ";}
-        if ($date_arr!="")        {$sql=$sql." AND trunc(DATE_ARR)=TO_DATE('".$date_arr."','dd-mm-yyyy')";}
-        if ($date_naiss!="")    {$sql=$sql." AND trunc(DATE_NAISS)=TO_DATE('".$date_naiss."','dd-mm-yyyy')";}
-        if ($nom!="")          {$sql=$sql." AND upper(NOM) like upper('%".$nom."%') ";}
+        if ($numero_arr!="")          {$sql=$sql." AND ls.NUMERO='".$numero_arr."' ";}
+        if ($date_arr!="")        {$sql=$sql." AND trunc(ls.DATE_ARR)=TO_DATE('".$date_arr."','dd-mm-yyyy')";}
+        if ($date_naiss!="")    {$sql=$sql." AND trunc(ls.DATE_NAISS)=TO_DATE('".$date_naiss."','dd-mm-yyyy')";}
+        if ($nom!="")          {$sql=$sql." AND upper(ls.NOM) like upper('%".$nom."%') ";}
 
-        $sql = $sql ." ORDER BY LAST_UPDATE,NUMERO DESC ";
+        $sql = $sql ." order by ls.LAST_UPDATE  DESC";
         $requette=DB::select($sql);
         return response()->json($requette);
     }

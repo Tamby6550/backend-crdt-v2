@@ -272,8 +272,9 @@ class Facture extends Controller
         }
         } catch (\Throwable $th) {
             $resultat=[
+                "etat"=>'error',
                 "success"=>false, 
-                "message"=>"Erreur sur l'enregistrement !" ,
+                "message"=>"Erreur sur l'enregistrement , ressayer ulterièrement" ,
                 "erreur"=>$th
             ];
         }
