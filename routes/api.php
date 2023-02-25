@@ -253,6 +253,9 @@ Route::put("retourFactNonRegleEnNonPaye","App\Http\Controllers\Facture@retourFac
 //Recherche Facture non regler
 Route::post("getRechercheEffectFacture","App\Http\Controllers\Facture@getRechercheEffectFacture");
 
+//Recherche Facture  regler
+Route::post("getRechercheFactureRegle","App\Http\Controllers\Facture@getRechercheFactureRegle");
+
 
 
 //----------------------------- Rapport ------------------------------//

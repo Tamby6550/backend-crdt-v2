@@ -378,7 +378,47 @@ class Facture extends Controller
         return response()->json($req);
     }
 
+    public function getRechercheFactureRegle(Request $req)
+    {    
+        $num_facture = $req->input("num_facture");
+        $date_facture = $req->input("date_facture");
+        $nom_patient = $req->input("nom_patient");
+        $nom_client = $req->input("nom_client");
+        $numero_arr = $req->input("numero_arr");
+        $date_arr = $req->input("date_arr");
 
+        
+        //Ny Type facture de avy @facture fa tsy patient eto
+        $sql="SELECT  R.NUM_ARRIV AS NUMERO,R.DATE_ARRIV AS DATE_ARR,R.ID_PATIENT AS ID_PATIENT,
+        to_char(sysdate,'MM/DD/YYYY')  as jourj, to_char(R.DATE_ARRIV,'DD/MM/YYYY') as date_arr,to_char(R.DATE_ARRIV,'MM/DD/YYYY') as date_arrive,
+		initcap(P.NOM||' '||nvl(P.PRENOM,' ')) as NOM,P.TYPE_PATIENT AS TYPE_PATIENT,
+		to_char(P.DATENAISS,'DD/MM/YYYY') AS DATE_NAISS,P.TELEPHONE AS TELEPHONE,
+		R.VERF_EXAM AS VERF_EXAMEN,R.VERF_FACT AS VERF_FACT,
+		RRF.NUM_FACT,  to_char(RRF.DATE_EXAMEN,'DD/MM/YYYY') AS DATE_EXAMEN,RRF.TYPE_CLIENT AS TYPE_PATIENT,
+        to_char(RRF.DATE_FACTURE,'DD/MM/YYYY') AS DATE_FACTURE,
+		R.LAST_UPDATE as LAST_UPDATE
+          
+        FROM CRDTPAT.REGISTRE R,CRDTPAT.PATIENT P ,MIANDRALITINA.RELIER_REGISTRE_FACTURE RRF
+		WHERE R.VERF_EXAM='2' AND R.VERF_FACT='2' AND
+        R.ID_PATIENT=P.ID_PATIENT AND R.DATE_ARRIV=RRF.DATE_ARRIV AND R.NUM_ARRIV=RRF.NUM_ARRIV";
+
+        if ($num_facture!="")          {$sql=$sql." AND RRF.NUM_FACT='".$num_facture."' ";}
+        if ($date_facture!="")        {$sql=$sql." AND to_char(RRF.DATE_FACTURE,'DD/MM/YYYY')='".$date_facture."'";} 
+        if ($nom_patient!="")          {$sql=$sql." AND upper(initcap(P.NOM||' '||nvl(P.PRENOM,' '))) like upper('%".$nom_patient."%')  ";}
+
+        if ($nom_client!="")          {
+            $sql=$sql." AND (SELECT bill.CLIENT   FROM MIANDRALITINA.BILLING1 bill WHERE NUM_FACT=RRF.NUM_FACT  AND upper(bill.CLIENT) 
+            like upper('%".$nom_client."%') ) like upper('%".$nom_client."%')";
+        }
+
+        if ($numero_arr!="")    {$sql=$sql." AND  R.NUM_ARRIV='".$numero_arr."' ";}
+        if ($date_arr!="")     {$sql=$sql." AND R.DATE_ARRIV=TO_DATE('".$date_arr."','dd-mm-yyyy') ";}
+
+        $sql = $sql ." ORDER BY  RRF.NUM_FACT DESC";
+        $req=DB::select($sql); 
+        
+        return response()->json($req);
+    }
     public function getInfoPatientFacture($num_facture)
     {    
         $data1=array();

@@ -31,14 +31,14 @@ class Reglement extends Controller
 
         if (!is_null($requette)) {
             $resultat=[
-                "success"=>true,
+                "etat"=>"success",
                 "message"=>"Enregistrement éfféctuée",
                 'sql'=>$requette 
             ];
         }
         else{
             $resultat=[
-                "success"=>false, 
+                "etat"=>'error', 
                 "message"=>"Erreur sur l'enregistrement",
                 'sql'=>$requette  
             ];
@@ -92,7 +92,7 @@ class Reglement extends Controller
         $requette=DB::update($sql, $donne);
         if (!is_null($requette)) {
          $resultat=[
-             "success"=>true,
+             "etat"=>'success',
              "message"=>"Modification éfféctuée",
              'sql'=>$requette 
          ];
